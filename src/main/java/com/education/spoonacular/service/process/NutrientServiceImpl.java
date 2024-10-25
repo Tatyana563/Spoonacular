@@ -25,12 +25,6 @@ public class NutrientServiceImpl implements NutrientService {
         nutrientRepository.save(nutrientEntity);
 
     }
-
-    @Override
-    public List<Nutrient> findAll() {
-        return nutrientRepository.findAll();
-    }
-
     @Override
     public Nutrient findByName(String name) {
         return nutrientRepository.findByName(name);

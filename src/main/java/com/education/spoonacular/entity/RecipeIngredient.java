@@ -5,31 +5,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@Entity
-@Table(name = "recipe_ingredient")
+@Embeddable
 @NoArgsConstructor
-public class RecipeIngredient  {
-
-    @EmbeddedId
-    private RecipeIngredientId id;
-
+@Table(name = "recipe_ingredient")
+public class RecipeIngredient {
     @ManyToOne
-    @MapsId("recipeid")
-    @JoinColumn(name = "recipeid")
-    private Recipe recipe;
-
-    @ManyToOne
-    @MapsId("ingredientid")
     @JoinColumn(name = "ingredientid")
     private Ingredient ingredient;
-
     @Column(name = "amount", nullable = false)
     private Double amount;
-
-    public RecipeIngredient(Recipe recipe, Ingredient ingredient, Double amount) {
-        this.recipe = recipe;
-        this.ingredient = ingredient;
-        this.amount = amount;
-        this.id = new RecipeIngredientId(recipe.getId(), ingredient.getId());
-    }
 }

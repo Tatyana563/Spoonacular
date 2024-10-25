@@ -10,7 +10,5 @@ import java.util.List;
 public interface NutrientService {
     void save(NutrientDto nutrientDto);
 
-    List<Nutrient> findAll();
-
     Nutrient findByName(String name);
 }

@@ -1,0 +1,8 @@
+Caused by: org.flywaydb.core.api.exception.FlywayValidateException: Validate failed: Migrations have failed validation
+Migration checksum mismatch for migration version 1
+-> Applied to database : 1989917676
+-> Resolved locally    : 1632010968
+
+
+RecipeIngredientId not used?
+

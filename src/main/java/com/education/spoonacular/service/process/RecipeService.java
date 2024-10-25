@@ -7,8 +7,5 @@ import java.util.List;
 
 public interface RecipeService {
     void save(RecipeDto recipe);
-
-    List<Recipe> getAll();
-
     Recipe findByName(String name);
 }

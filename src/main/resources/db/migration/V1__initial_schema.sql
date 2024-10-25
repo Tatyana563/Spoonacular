@@ -13,8 +13,8 @@ CREATE TABLE IF NOT EXISTS ingredient
 );
 CREATE TABLE IF NOT EXISTS cuisine
 (
-    id    serial PRIMARY KEY,
-    name varchar(50)
+    id   serial PRIMARY KEY,
+    name varchar(50) UNIQUE
 );
 CREATE TABLE IF NOT EXISTS recipe
 (
@@ -27,25 +27,31 @@ CREATE TABLE IF NOT EXISTS recipe
 
 CREATE TABLE IF NOT EXISTS recipe_ingredient
 (
-    id            serial PRIMARY KEY,
     recipeId     int,
     ingredientId int,
-    amount       int
+    amount       double precision,
+    CONSTRAINT pk_recipe_ingredient PRIMARY KEY (recipeId, ingredientId),
+    CONSTRAINT fk_recipe FOREIGN KEY (recipeId) REFERENCES recipe (id),
+    CONSTRAINT fk_ingredient FOREIGN KEY (ingredientId) REFERENCES ingredient (id)
 );
-
 
 CREATE TABLE IF NOT EXISTS recipe_nutrient
 (
-    id         serial PRIMARY KEY,
     recipeId   int,
     nutrientId int,
-    amount     int
+    amount     double precision,
+    CONSTRAINT pk_recipe_nutrient PRIMARY KEY (recipeId, nutrientId),
+    CONSTRAINT fk_recipe FOREIGN KEY (recipeId) REFERENCES recipe (id),
+    CONSTRAINT fk_nutrient FOREIGN KEY (nutrientId) REFERENCES nutrient (id)
 );
 
-CREATE TABLE IF NOT EXISTS recipe_ingredient
+CREATE TABLE IF NOT EXISTS recipe_cuisine
 (
-    id        serial PRIMARY KEY,
-    recipeId   int,
-    ingredientId int,
-    amount  double precision
+   recipeId  int,
+   cuisineId int,
+    CONSTRAINT pk_recipe_cuisineId PRIMARY KEY (recipeId,cuisineId),
+    CONSTRAINT fk_recipe FOREIGN KEY (recipeId) REFERENCES recipe (id),
+    CONSTRAINT fk_cuisineId FOREIGN KEY (cuisineId) REFERENCES cuisine (id)
 );
+
+

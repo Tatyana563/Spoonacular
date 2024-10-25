@@ -2,16 +2,21 @@ package com.education.spoonacular.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Data
 @Entity
-@Table(name = "nutrient")
 @NoArgsConstructor
+@Table(name = "nutrient")
+@ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
+
 public class Nutrient extends BaseEntity {
-    @Column(name = "NAME", nullable = false)
+    @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "UNIT", nullable = false)
+    @Column(name = "unit", nullable = false)
     private String unit;
 }

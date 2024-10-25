@@ -2,20 +2,21 @@ package com.education.spoonacular.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Data
 @Entity
 @Table(name = "ingredient")
 @NoArgsConstructor
-public class Ingredient  {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
+public class Ingredient extends BaseEntity  {
 
-    @Column(name = "NAME", nullable = false)
+    @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "UNIT", nullable = false)
+    @Column(name = "unit", nullable = false)
     private String unit;
 }

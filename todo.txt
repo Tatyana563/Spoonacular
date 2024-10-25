@@ -1,0 +1,10 @@
+1) one parent for Nutrient, Ingredient
+2)  do Enum but in DB varchar
+       @Column(name = "unit", nullable = false)
+       private String unit;
+
+       for Ingredient
+3) composite key?
+RecipeIngredientId
+
+4) quartz
