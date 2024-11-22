@@ -12,11 +12,6 @@ import lombok.ToString;
 @Table(name = "nutrient")
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
+public class Nutrient extends  ComponentBaseEntity {
 
-public class Nutrient extends BaseEntity {
-    @Column(name = "name", nullable = false)
-    private String name;
-
-    @Column(name = "unit", nullable = false)
-    private String unit;
 }

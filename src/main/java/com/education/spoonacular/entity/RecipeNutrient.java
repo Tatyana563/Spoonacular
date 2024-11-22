@@ -6,7 +6,6 @@ import lombok.NoArgsConstructor;
 
 @Data
 @Embeddable
-@Table(name = "recipe_nutrient")
 @NoArgsConstructor
 public class RecipeNutrient  {
 

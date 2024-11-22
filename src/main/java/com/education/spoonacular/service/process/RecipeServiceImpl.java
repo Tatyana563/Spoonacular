@@ -1,65 +1,100 @@
 package com.education.spoonacular.service.process;
 
-
+import com.education.spoonacular.dto.NutrientDto;
 import com.education.spoonacular.dto.RecipeDto;
 import com.education.spoonacular.dto.RecipeNutrientDto;
 import com.education.spoonacular.entity.Cuisine;
+import com.education.spoonacular.entity.Nutrient;
 import com.education.spoonacular.entity.Recipe;
 import com.education.spoonacular.entity.RecipeNutrient;
-import com.education.spoonacular.repository.CuisineRepository;
+import com.education.spoonacular.repository.NutrientRepository;
 import com.education.spoonacular.repository.RecipeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class RecipeServiceImpl implements RecipeService {
     private final RecipeRepository recipeRepository;
-    private final CuisineRepository cuisineRepository;
+    private final NutrientRepository nutrientRepository;
+    private final CuisineService cuisineService;
+    private final NutrientService nutrientService;
 
-    @Override
-    public void save(RecipeDto recipe) {
-        Recipe recipeEntity = new Recipe();
-        recipeEntity.setName(recipe.getName());
-        recipeEntity.setSummary(recipe.getSummary());
-        recipeEntity.setVegetarian(recipe.isVegetarian());
-        recipeEntity.setReadyInMinutes(recipe.getPreparationTime());
-
-        List<RecipeNutrientDto> recipeNutrientDtos = recipe.getRecipeNutrientDtos();
-        List<com.education.spoonacular.dto.Cuisine> cuisineDtos = recipe.getCuisines();
-        Set<Cuisine> recipeCuisines = new HashSet<>();
-        for (com.education.spoonacular.dto.Cuisine cuisineDto : cuisineDtos) {
-            Cuisine cuisine = new Cuisine();
-            cuisine.setName(cuisineDto.getName());
-            recipeCuisines.add(cuisine);
+    public void processResponse(List<RecipeDto> recipeDtos) {
+        List<NutrientDto> filteredNutrientsDtos = nutrientService.filter(recipeDtos);
+        if (!filteredNutrientsDtos.isEmpty()) {
+            nutrientService.saveAll(filteredNutrientsDtos);
         }
 
-        recipeCuisines.stream()
-                .filter(cuisine -> cuisineRepository.findByName(cuisine.getName()).isEmpty())  // Only keep non-existing cuisines
-                .forEach(cuisineRepository::save);
-
-        Set<Cuisine> cuisineSet = new HashSet<>();
-        for (com.education.spoonacular.dto.Cuisine cuisineDto : cuisineDtos) {
-            Optional<Cuisine> cuisineRepositoryByName = cuisineRepository.findByName(cuisineDto.getName());
-            cuisineRepositoryByName.ifPresent(cuisineSet::add);
-        }
-        List<RecipeNutrient> recipeNutrients = new ArrayList<>();
-        for (RecipeNutrientDto recipeNutrientDto : recipeNutrientDtos) {
-            RecipeNutrient recipeNutrient = new RecipeNutrient();
-            recipeNutrient.setNutrient(recipeNutrientDto.getNutrient());
-            recipeNutrient.setAmount(recipeNutrientDto.getAmount());
-            recipeNutrients.add(recipeNutrient);
+        Set<String> filteredCuisines = cuisineService.filter(recipeDtos);
+        if (!filteredCuisines.isEmpty()) {
+            cuisineService.saveAll(filteredCuisines);
         }
 
-        recipeEntity.setRecipeNutrients(recipeNutrients);
-        recipeEntity.setCuisines(cuisineSet);
-        recipeRepository.save(recipeEntity);
+        List<RecipeDto> filteredRecipes = filter(recipeDtos);
+        saveRecipe(filteredRecipes);
     }
 
     @Override
-    public Recipe findByName(String name) {
-        return recipeRepository.findByName(name);
+    public List<RecipeDto> filter(List<RecipeDto> recipeDtos) {
+        ///TODO: url is unique not name
+
+        Set<String> recipeUrls = recipeDtos.stream().map(RecipeDto::getUrl).collect(Collectors.toSet());
+        Set<Recipe> existingInDBRecipes = findExistingInDB(recipeUrls);
+        if (!existingInDBRecipes.isEmpty()) {
+            List<String> existingRecipes = existingInDBRecipes.stream().map(Recipe::getUrl).toList();
+            existingRecipes.forEach(recipeUrls::remove);
+        }
+
+        return recipeDtos.stream().filter(recipeDto -> recipeUrls.contains(recipeDto.getUrl())).collect(Collectors.toList());
+
+    }
+
+    @Override
+    public Set<Recipe> findExistingInDB(Set<String> recipeNames) {
+        return recipeRepository.findExistingInDB(recipeNames);
+    }
+
+    @Override
+    public void saveRecipe(List<RecipeDto> recipeDtos) {
+        List<Recipe> recipeList = new ArrayList<>();
+        for (RecipeDto recipeDto : recipeDtos) {
+
+            Recipe recipeEntity = new Recipe();
+            recipeEntity.setName(recipeDto.getName());
+            recipeEntity.setSummary(recipeDto.getSummary());
+            recipeEntity.setVegetarian(recipeDto.isVegetarian());
+            recipeEntity.setReadyInMinutes(recipeDto.getPreparationTime());
+            recipeEntity.setUrl(recipeDto.getUrl());
+            Set<Cuisine> cuisineSet = new HashSet<>();
+            for (String cuisineDto : recipeDto.getCuisines()) {
+                Cuisine cuisineRepositoryByName = cuisineService.findByName(cuisineDto)
+                        .orElseThrow(() -> new IllegalStateException("Cuisine was not found " + cuisineDto));
+                cuisineSet.add(cuisineRepositoryByName);
+            }
+            //TODO: Nutrient the same as Cuisine  -  .orElseThrow(()
+            List<RecipeNutrient> recipeNutrients = new ArrayList<>();
+            for (RecipeNutrientDto nutrient : recipeDto.getNutritionDto().getRecipeNutrientDtoList()) {
+                RecipeNutrient recipeNutrient = new RecipeNutrient();
+                Nutrient nutrientRepositoryByName = nutrientRepository.findByName(nutrient.getName())
+                        .orElseThrow(() -> new IllegalStateException("Nutrient was not found " + nutrient.getName()));
+
+                recipeNutrient.setAmount(nutrient.getAmount());
+                recipeNutrient.setNutrient(nutrientRepositoryByName);
+                recipeNutrients.add(recipeNutrient);
+            }
+
+            recipeEntity.setRecipeNutrients(recipeNutrients);
+            recipeEntity.setCuisines(cuisineSet);
+
+            recipeList.add(recipeEntity);
+        }
+        recipeRepository.saveAll(recipeList);
     }
 }

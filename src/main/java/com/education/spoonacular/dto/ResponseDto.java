@@ -4,13 +4,12 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Setter
 @Getter
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class RecipeNutrientDto {
-    private String name;
-    private String unit;
-    private Double amount;
+public class ResponseDto {
+    private List<RecipeDto> results;
 
 }
-

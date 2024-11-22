@@ -8,3 +8,5 @@
 RecipeIngredientId
 
 4) quartz
+
+5) ready in minutes interval

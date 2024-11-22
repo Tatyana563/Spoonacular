@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.List;
+import java.util.Set;
 
 @Setter
 @Getter
@@ -13,11 +14,13 @@ import java.util.List;
 public class RecipeDto {
     @JsonProperty("title")
     private String name;
+    @JsonProperty("sourceUrl")
+    private String url;
     private String summary;
     private boolean vegetarian;
     @JsonProperty("readyInMinutes")
     private int preparationTime;
-
-    List<RecipeNutrientDto> recipeNutrientDtos;
-    List<Cuisine> cuisines;
+    @JsonProperty("nutrition")
+    private NutritionDto nutritionDto;
+    private Set<String> cuisines;
 }

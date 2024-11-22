@@ -1,35 +1,43 @@
+-- TODO: add index in order to have faster search by name
 CREATE TABLE IF NOT EXISTS nutrient
 (
     id   serial PRIMARY KEY,
-    name varchar(50),
-    unit varchar(20)
+    name varchar(50) UNIQUE not null,
+    unit varchar(20)        not null
 );
+CREATE INDEX nutrient_name ON nutrient (name ASC);
 
+-- TODO: add index in order to have faster search by name
 CREATE TABLE IF NOT EXISTS ingredient
 (
     id   serial PRIMARY KEY,
-    name varchar(50),
-    unit varchar(20)
+    name varchar(50) UNIQUE not null,
+    unit varchar(20)        not null
 );
+
+CREATE INDEX ingredient_name ON ingredient (name ASC);
+-- TODO: add index in order to have faster search by name
 CREATE TABLE IF NOT EXISTS cuisine
 (
     id   serial PRIMARY KEY,
-    name varchar(50) UNIQUE
+    name varchar(50) UNIQUE not null
 );
+-- TODO: add index in order to have faster search by name
 CREATE TABLE IF NOT EXISTS recipe
 (
     id             serial PRIMARY KEY,
-    name           varchar(50),
-    vegetarian     boolean,
+    name           varchar(50)           not null,
+    vegetarian     boolean default false not null,
     summary        text,
-    readyInMinutes varchar(10)
+    url            text UNIQUE           not null,
+    readyInMinutes int
 );
-
+CREATE INDEX recipe_name ON recipe (name ASC);
 CREATE TABLE IF NOT EXISTS recipe_ingredient
 (
-    recipeId     int,
-    ingredientId int,
-    amount       double precision,
+    recipeId     int              not null,
+    ingredientId int              not null,
+    amount       double precision not null,
     CONSTRAINT pk_recipe_ingredient PRIMARY KEY (recipeId, ingredientId),
     CONSTRAINT fk_recipe FOREIGN KEY (recipeId) REFERENCES recipe (id),
     CONSTRAINT fk_ingredient FOREIGN KEY (ingredientId) REFERENCES ingredient (id)
@@ -37,9 +45,9 @@ CREATE TABLE IF NOT EXISTS recipe_ingredient
 
 CREATE TABLE IF NOT EXISTS recipe_nutrient
 (
-    recipeId   int,
-    nutrientId int,
-    amount     double precision,
+    recipeId   int              not null,
+    nutrientId int              not null,
+    amount     double precision not null,
     CONSTRAINT pk_recipe_nutrient PRIMARY KEY (recipeId, nutrientId),
     CONSTRAINT fk_recipe FOREIGN KEY (recipeId) REFERENCES recipe (id),
     CONSTRAINT fk_nutrient FOREIGN KEY (nutrientId) REFERENCES nutrient (id)
@@ -47,9 +55,9 @@ CREATE TABLE IF NOT EXISTS recipe_nutrient
 
 CREATE TABLE IF NOT EXISTS recipe_cuisine
 (
-   recipeId  int,
-   cuisineId int,
-    CONSTRAINT pk_recipe_cuisineId PRIMARY KEY (recipeId,cuisineId),
+    recipeId  int not null,
+    cuisineId int not null,
+    CONSTRAINT pk_recipe_cuisineId PRIMARY KEY (recipeId, cuisineId),
     CONSTRAINT fk_recipe FOREIGN KEY (recipeId) REFERENCES recipe (id),
     CONSTRAINT fk_cuisineId FOREIGN KEY (cuisineId) REFERENCES cuisine (id)
 );

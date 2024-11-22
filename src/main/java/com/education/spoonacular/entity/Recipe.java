@@ -14,12 +14,15 @@ import java.util.Set;
 public class Recipe extends BaseEntity {
     @Column(name = "name", nullable = false)
     private String name;
+    @Column(name = "url", nullable = false)
+    private String url;
     @Column(name = "summary", nullable = false)
     private String summary;
     @Column(name = "vegetarian", nullable = false)
     private boolean vegetarian;
     @Column(name = "readyinminutes", nullable = false)
     private int readyInMinutes;
+
     @ElementCollection
     @CollectionTable(
             name = "recipe_nutrient",
@@ -27,7 +30,8 @@ public class Recipe extends BaseEntity {
     )
     private List<RecipeNutrient> recipeNutrients;
 
-    @OneToMany
+   // @OneToMany(fetch = FetchType.EAGER)
+    @OneToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name="recipe_cuisine",
             joinColumns = @JoinColumn( name="recipeid"),

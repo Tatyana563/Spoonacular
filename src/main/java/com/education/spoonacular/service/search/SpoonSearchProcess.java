@@ -1,5 +1,7 @@
 package com.education.spoonacular.service.search;
 
+import com.education.spoonacular.dto.ResponseDto;
+
 public interface SpoonSearchProcess {
-    String getDataByDishAndAmount(String dish, int amount);
+    ResponseDto getDataByDishAndAmount(String dish, int amount);
 }
