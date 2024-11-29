@@ -11,3 +11,14 @@ You can save these plans in the database and allow users to retrieve them later.
 
 3) Generate a Shopping List
  Once users have selected their meal plans, you can aggregate the ingredients needed across all recipes and generate a shopping list.
+
+ ---------------------------------------
+ User fills the form:
+ 1) Man/Woman
+ 2) Active/Not active
+ 3) Cuisine preferences?
+ 4) Allergies
+
+ Api returns suggested a few dishes for lunch
+ ----------------------------------------
+

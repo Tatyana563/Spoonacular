@@ -18,4 +18,8 @@ public class Cuisine extends BaseEntity {
 
     @Column(name = "name", unique = true, nullable = false)
     private String name;
+
+    public Cuisine(String name) {
+        this.name = name;
+    }
 }

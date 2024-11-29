@@ -14,3 +14,4 @@ public class NutritionDto {
     @JsonProperty("nutrients")
     List<RecipeNutrientDto> recipeNutrientDtoList;
 }
+//TODO: divide into packages inner and outer dtos

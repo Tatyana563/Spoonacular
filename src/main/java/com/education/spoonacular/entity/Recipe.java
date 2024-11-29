@@ -37,5 +37,5 @@ public class Recipe extends BaseEntity {
             joinColumns = @JoinColumn( name="recipeid"),
             inverseJoinColumns = @JoinColumn( name="cuisineid")
     )
-    public Set<Cuisine> cuisines;
+    public List<Cuisine> cuisines;
 }

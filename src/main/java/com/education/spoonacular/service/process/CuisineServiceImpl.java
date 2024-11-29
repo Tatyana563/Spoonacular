@@ -9,8 +9,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -19,38 +17,41 @@ public class CuisineServiceImpl implements CuisineService {
     private final CuisineRepository cuisineRepository;
 
     @Override
-    public Set<String> filter(List<RecipeDto> recipeDtos) {
-        Set<String> cuisineNames = recipeDtos.stream()
+    public void collectAndSaveNewEntities(List<RecipeDto> recipeDtos) {
+        List<String> cuisineNames = recipeDtos.stream()
                 .map(RecipeDto::getCuisines)
-                .flatMap(Collection::stream).collect(Collectors.toSet());
+                .flatMap(Collection::stream)
+                .distinct()
+                .collect(Collectors.toList());
 
-        List<Cuisine> existingInDBCuisines = findExistingInDB(cuisineNames);
-        if(existingInDBCuisines!=null){
-            Set<String> existingCuisines = existingInDBCuisines.stream().map(Cuisine::getName).collect(Collectors.toSet());
-            cuisineNames.removeAll(existingCuisines);
+        List<String> existingCuisineNamesInDB = findExistingCuisineNamesInDB(cuisineNames);
+        if(existingCuisineNamesInDB!=null){
+            cuisineNames.removeAll(existingCuisineNamesInDB);
         }
-        return cuisineNames;
+        List<Cuisine> cuisines = cuisineNames.stream().map(Cuisine::new).collect(Collectors.toList());
+        cuisineRepository.saveAll(cuisines);
     }
-    ////TODO; the same for Cuisine, use distinct as now call DB as many times as duplicates I have (for example European 10 times 10 calls cuisineService.findByName)
-    //// and move to CuisineService, rename process for saveAll()
+
+
     @Override
-    public List<Cuisine> saveAll(Set<String> cuisines) {
-        Set<Cuisine> cuisineList = cuisines.stream().map(s -> {
+    public List<Cuisine> saveAll(List<String> cuisines) {
+        List<Cuisine> cuisineList = cuisines.stream().map(s -> {
             Cuisine cuisine = new Cuisine();
             cuisine.setName(s);
             return cuisine;
-        }).collect(Collectors.toSet());
+        }).collect(Collectors.toList());
 
         return cuisineRepository.saveAll(cuisineList);
     }
 
     @Override
-    public Optional<Cuisine> findByName(String name) {
-        return cuisineRepository.findByName(name);
+    public List<Cuisine> findByNames(List<String> names) {
+        return cuisineRepository.findByNames(names);
     }
 
     @Override
-    public List<Cuisine> findExistingInDB(Set<String> cuisineList) {
-        return cuisineRepository.findExistingInDB(cuisineList);
+    public List<String> findExistingCuisineNamesInDB(List<String> cuisineList) {
+        return cuisineRepository.findExistingCuisineNamesInDB(cuisineList);
     }
+
 }

@@ -1,8 +1,6 @@
 package com.education.spoonacular.service.process;
 
-import com.education.spoonacular.dto.NutrientDto;
-import com.education.spoonacular.dto.RecipeDto;
-import com.education.spoonacular.dto.RecipeNutrientDto;
+import com.education.spoonacular.dto.*;
 import com.education.spoonacular.entity.Cuisine;
 import com.education.spoonacular.entity.Nutrient;
 import com.education.spoonacular.entity.Recipe;
@@ -13,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -24,36 +21,19 @@ public class RecipeServiceImpl implements RecipeService {
     private final RecipeRepository recipeRepository;
     private final NutrientRepository nutrientRepository;
     private final CuisineService cuisineService;
-    private final NutrientService nutrientService;
-
-    public void processResponse(List<RecipeDto> recipeDtos) {
-        List<NutrientDto> filteredNutrientsDtos = nutrientService.filter(recipeDtos);
-        if (!filteredNutrientsDtos.isEmpty()) {
-            nutrientService.saveAll(filteredNutrientsDtos);
-        }
-
-        Set<String> filteredCuisines = cuisineService.filter(recipeDtos);
-        if (!filteredCuisines.isEmpty()) {
-            cuisineService.saveAll(filteredCuisines);
-        }
-
-        List<RecipeDto> filteredRecipes = filter(recipeDtos);
-        saveRecipe(filteredRecipes);
-    }
 
     @Override
-    public List<RecipeDto> filter(List<RecipeDto> recipeDtos) {
-        ///TODO: url is unique not name
+    public void collectAndSaveNewEntities(List<RecipeDto> recipeDtos) {
 
         Set<String> recipeUrls = recipeDtos.stream().map(RecipeDto::getUrl).collect(Collectors.toSet());
         Set<Recipe> existingInDBRecipes = findExistingInDB(recipeUrls);
         if (!existingInDBRecipes.isEmpty()) {
-            List<String> existingRecipes = existingInDBRecipes.stream().map(Recipe::getUrl).toList();
-            existingRecipes.forEach(recipeUrls::remove);
+            List<String> existingRecipesUrl = existingInDBRecipes.stream().map(Recipe::getUrl).toList();
+            existingRecipesUrl.forEach(recipeUrls::remove);
         }
 
-        return recipeDtos.stream().filter(recipeDto -> recipeUrls.contains(recipeDto.getUrl())).collect(Collectors.toList());
-
+        List<RecipeDto> recipiesToBeSaved = recipeDtos.stream().filter(recipeDto -> recipeUrls.contains(recipeDto.getUrl())).toList();
+        saveRecipe(recipiesToBeSaved);
     }
 
     @Override
@@ -72,29 +52,69 @@ public class RecipeServiceImpl implements RecipeService {
             recipeEntity.setVegetarian(recipeDto.isVegetarian());
             recipeEntity.setReadyInMinutes(recipeDto.getPreparationTime());
             recipeEntity.setUrl(recipeDto.getUrl());
-            Set<Cuisine> cuisineSet = new HashSet<>();
-            for (String cuisineDto : recipeDto.getCuisines()) {
-                Cuisine cuisineRepositoryByName = cuisineService.findByName(cuisineDto)
-                        .orElseThrow(() -> new IllegalStateException("Cuisine was not found " + cuisineDto));
-                cuisineSet.add(cuisineRepositoryByName);
+
+            //TODO: instead of findByName use findByNames - then check the size of a list if required throw  new IllegalStateException("Cuisine was not found " + cuisine));
+            List<Cuisine> savedCuisines = cuisineService.findByNames(recipeDto.getCuisines());
+            if (savedCuisines.size()!=recipeDto.getCuisines().size()) {
+                throw new IllegalStateException(String.format("Cuisines were not found for recipe with name '%s' and url: '%s'",
+                        recipeDto.getName(), recipeDto.getUrl()));
             }
+            recipeEntity.setCuisines(savedCuisines);
             //TODO: Nutrient the same as Cuisine  -  .orElseThrow(()
             List<RecipeNutrient> recipeNutrients = new ArrayList<>();
-            for (RecipeNutrientDto nutrient : recipeDto.getNutritionDto().getRecipeNutrientDtoList()) {
-                RecipeNutrient recipeNutrient = new RecipeNutrient();
-                Nutrient nutrientRepositoryByName = nutrientRepository.findByName(nutrient.getName())
-                        .orElseThrow(() -> new IllegalStateException("Nutrient was not found " + nutrient.getName()));
 
-                recipeNutrient.setAmount(nutrient.getAmount());
-                recipeNutrient.setNutrient(nutrientRepositoryByName);
-                recipeNutrients.add(recipeNutrient);
+                List<String> nutrientDtoNames = recipeDto.getNutritionDto().getRecipeNutrientDtoList().stream().map(RecipeNutrientDto::getName).collect(Collectors.toList());
+
+                List<Nutrient> nutrientRepositoryByName = nutrientRepository.findByNames(nutrientDtoNames);
+
+                if (nutrientRepositoryByName.size()!=recipeDto.getNutritionDto().getRecipeNutrientDtoList().size()) {
+                    throw new IllegalStateException(String.format("Nutrients were not found for recipe with name '%s' and url: '%s'",
+                            recipeDto.getName(), recipeDto.getUrl()));
+                }
+                List<RecipeNutrientDto> recipeNutrientDtoList = recipeDto.getNutritionDto().getRecipeNutrientDtoList();
+
+                for (Nutrient nutrient : nutrientRepositoryByName) {
+
+                    RecipeNutrient recipeNutrient = new RecipeNutrient();
+                    recipeNutrient.setNutrient(nutrient);
+                    recipeNutrient.setAmount(recipeNutrientDtoList.stream()
+                            .filter(nutrientDto -> nutrientDto.getName().equals(nutrient.getName()))
+                            .map(RecipeNutrientDto::getAmount)
+                            .findFirst().get());
+                    recipeNutrients.add(recipeNutrient);
+
             }
 
             recipeEntity.setRecipeNutrients(recipeNutrients);
-            recipeEntity.setCuisines(cuisineSet);
 
             recipeList.add(recipeEntity);
+
+            recipeRepository.saveAll(recipeList);
         }
-        recipeRepository.saveAll(recipeList);
+    }
+
+    @Override
+    public List<DishDto> getSuggestedDishes(LunchRequestDto request) {
+
+        int targetCalories = calculateCalories(request.getGender(), request.getActivityLevel());
+
+
+        Set<String> cuisine = request.getCuisinePreferences();
+        Set<Integer> allergens = request.getIngredientsExclusions();
+        List<Recipe> suggestedRecipes = getSuggestedRecipes(cuisine, targetCalories);
+
+        return null;
+    }
+
+    private List<Recipe> getSuggestedRecipes(Set<String> cuisine, int targetCalories) {
+        return recipeRepository.getSuggestedRecipes(cuisine, targetCalories);
+    }
+
+    private int calculateCalories(String gender, String activityLevel) {
+        if (gender.equals("man")) {
+            return activityLevel.equals("active") ? 800 : 667;
+        } else {
+            return activityLevel.equals("active") ? 667 : 533;
+        }
     }
 }

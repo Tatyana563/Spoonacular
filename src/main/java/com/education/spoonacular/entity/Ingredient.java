@@ -12,7 +12,6 @@ import lombok.ToString;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
-// TODO: create ComponentBaseEntity for Ingredient, Nutrient to have name and unit
 public class Ingredient extends ComponentBaseEntity  {
 
 }

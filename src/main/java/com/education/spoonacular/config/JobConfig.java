@@ -16,8 +16,4 @@ import java.util.Map;
 public class JobConfig {
     private final Map<String, JobProperties> jobs = new HashMap<>();
 
-    @PostConstruct
-    private void setNamesToJob() {
-        jobs.forEach((name, jobConfig) -> jobConfig.setName(name));
-    }
 }

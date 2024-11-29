@@ -22,5 +22,5 @@ public class RecipeDto {
     private int preparationTime;
     @JsonProperty("nutrition")
     private NutritionDto nutritionDto;
-    private Set<String> cuisines;
+    private List<String> cuisines;
 }

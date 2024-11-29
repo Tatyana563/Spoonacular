@@ -1,13 +1,13 @@
--- TODO: add index in order to have faster search by name
+
 CREATE TABLE IF NOT EXISTS nutrient
 (
     id   serial PRIMARY KEY,
     name varchar(50) UNIQUE not null,
     unit varchar(20)        not null
 );
-CREATE INDEX nutrient_name ON nutrient (name ASC);
+CREATE INDEX IF NOT EXISTS nutrient_name ON nutrient (name ASC);
 
--- TODO: add index in order to have faster search by name
+
 CREATE TABLE IF NOT EXISTS ingredient
 (
     id   serial PRIMARY KEY,
@@ -15,14 +15,14 @@ CREATE TABLE IF NOT EXISTS ingredient
     unit varchar(20)        not null
 );
 
-CREATE INDEX ingredient_name ON ingredient (name ASC);
--- TODO: add index in order to have faster search by name
+CREATE INDEX IF NOT EXISTS ingredient_name ON ingredient (name ASC);
+
 CREATE TABLE IF NOT EXISTS cuisine
 (
     id   serial PRIMARY KEY,
     name varchar(50) UNIQUE not null
 );
--- TODO: add index in order to have faster search by name
+
 CREATE TABLE IF NOT EXISTS recipe
 (
     id             serial PRIMARY KEY,
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS recipe
     url            text UNIQUE           not null,
     readyInMinutes int
 );
-CREATE INDEX recipe_name ON recipe (name ASC);
+CREATE INDEX IF NOT EXISTS recipe_name ON recipe (name ASC);
 CREATE TABLE IF NOT EXISTS recipe_ingredient
 (
     recipeId     int              not null,

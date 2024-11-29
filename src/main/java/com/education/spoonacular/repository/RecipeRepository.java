@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -16,4 +17,7 @@ public interface RecipeRepository extends JpaRepository<Recipe, Integer> {
 
     @Query("SELECT r FROM Recipe r LEFT JOIN FETCH r.cuisines WHERE r.url IN :urls")
     Set<Recipe> findExistingInDB(@Param("urls") Set<String> urls);
+
+    @Query(" SELECT DISTINCT r FROM Recipe r JOIN r.recipeNutrients rn  JOIN rn.nutrient n JOIN r.cuisines c WHERE n.name = 'Calories' AND rn.amount <= :targetCalories " + "AND c.name IN :cuisines ")
+    List<Recipe> getSuggestedRecipes(Set<String> cuisines, int targetCalories);
 }
