@@ -2,7 +2,7 @@ package com.education.spoonacular.controller;
 
 import com.education.spoonacular.dto.DishDto;
 import com.education.spoonacular.dto.LunchRequestDto;
-import com.education.spoonacular.service.process.RecipeService;
+import com.education.spoonacular.service.process.api.RecipeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;

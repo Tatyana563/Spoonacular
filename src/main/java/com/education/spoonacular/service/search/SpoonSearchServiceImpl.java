@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import static org.springframework.http.HttpMethod.GET;
 
@@ -16,13 +17,17 @@ public class SpoonSearchServiceImpl implements SpoonSearchProcess {
     private final SpoonProperties properties;
 
     @Override
-    //TODO:  UriComponentsBuilder.fromHttpUrl() instead of  String.format
     public ResponseDto getDataByDishAndAmount(String dish, int amount) {
-        String url = String.format("%s%s&number=%d&addRecipeInformation=true&addRecipeNutrition=true&apiKey=%s",
-                properties.getBaseUrl(),
-                dish,
-                amount,
-                properties.getApiKey());
+
+        String url = UriComponentsBuilder.fromHttpUrl(properties.getBaseUrl())
+                .queryParam("query",dish)
+                .queryParam("number", amount)
+                .queryParam("addRecipeInformation", true)
+                .queryParam("addRecipeNutrition", true)
+                .queryParam("apiKey", properties.getApiKey())
+                .build()
+                .toString();
+
         ResponseEntity<ResponseDto> response = restTemplate.exchange(url, GET, null, ResponseDto.class);
 
         return response.getBody();

@@ -4,7 +4,8 @@ import com.education.spoonacular.config.JobConfig;
 import com.education.spoonacular.config.JobProperties;
 import com.education.spoonacular.dto.RecipeDto;
 import com.education.spoonacular.dto.ResponseDto;
-import com.education.spoonacular.service.process.MainServiceImpl;
+import com.education.spoonacular.service.process.api.MainService;
+import com.education.spoonacular.service.process.impl.MainServiceImpl;
 import com.education.spoonacular.service.search.SpoonSearchServiceImpl;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -19,8 +20,9 @@ import java.util.Map;
 @Component
 @RequiredArgsConstructor
 public class StartupJob {
+    //TODO: add interface
     private final SpoonSearchServiceImpl spoonSearchService;
-    private final MainServiceImpl mainService;
+    private final MainService mainService;
     private final JobConfig jobConfig;
 
     @PostConstruct
@@ -34,12 +36,11 @@ public class StartupJob {
         log.info("Job running after application start...");
         List<RecipeDto> recipeDtos = new ArrayList<>();
         for (Map.Entry<String, JobProperties> entry : jobConfig.getJobs().entrySet()) {
-            List<RecipeDto> recipeDto= new ArrayList<>();
             String dish = entry.getKey();
             JobProperties value = entry.getValue();
             ResponseDto dataByDishAndAmount = spoonSearchService.getDataByDishAndAmount(dish, value.getAmount());
-            recipeDto = dataByDishAndAmount.getResults();
-            //TODO in case of duplicates
+            List<RecipeDto> recipeDto= dataByDishAndAmount.getResults();
+            //TODO in case of duplicates, create Set for keys
             recipeDtos.addAll(recipeDto);
 //TODO: filter incomplete recipes
         }
@@ -51,7 +52,7 @@ public class StartupJob {
     }
 
 
-//TODO: check if index is required for cuisine if it has unique
+
 }
 
 

@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS cuisine
 CREATE TABLE IF NOT EXISTS recipe
 (
     id             serial PRIMARY KEY,
-    name           varchar(50)           not null,
+    name           text        not null,
     vegetarian     boolean default false not null,
     summary        text,
     url            text UNIQUE           not null,
