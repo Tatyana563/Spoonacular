@@ -5,11 +5,11 @@ import com.education.spoonacular.config.JobProperties;
 import com.education.spoonacular.dto.RecipeDto;
 import com.education.spoonacular.dto.ResponseDto;
 import com.education.spoonacular.service.process.api.MainService;
-import com.education.spoonacular.service.process.impl.MainServiceImpl;
 import com.education.spoonacular.service.search.SpoonSearchServiceImpl;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -19,17 +19,11 @@ import java.util.Map;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class StartupJob {
+public class StartupJob implements ApplicationRunner {
     //TODO: add interface
     private final SpoonSearchServiceImpl spoonSearchService;
     private final MainService mainService;
     private final JobConfig jobConfig;
-
-    @PostConstruct
-    public void process() {
-        List<RecipeDto> recipeDtoList = fetchData();
-        processData(recipeDtoList);
-    }
 
     //TODO: use application runner instead of  @PostConstruct
     private List<RecipeDto> fetchData() {
@@ -39,7 +33,7 @@ public class StartupJob {
             String dish = entry.getKey();
             JobProperties value = entry.getValue();
             ResponseDto dataByDishAndAmount = spoonSearchService.getDataByDishAndAmount(dish, value.getAmount());
-            List<RecipeDto> recipeDto= dataByDishAndAmount.getResults();
+            List<RecipeDto> recipeDto = dataByDishAndAmount.getResults();
             //TODO in case of duplicates, create Set for keys
             recipeDtos.addAll(recipeDto);
 //TODO: filter incomplete recipes
@@ -52,7 +46,11 @@ public class StartupJob {
     }
 
 
-
+    @Override
+    public void run(ApplicationArguments args) {
+        List<RecipeDto> recipeDtoList = fetchData();
+        processData(recipeDtoList);
+    }
 }
 
 
