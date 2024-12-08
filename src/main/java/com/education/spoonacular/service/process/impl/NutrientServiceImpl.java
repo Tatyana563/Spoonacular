@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -61,7 +62,7 @@ public class NutrientServiceImpl extends AbstractGeneralService<Nutrient, Nutrie
     }
 
     @Override
-    protected List<String> findExistingEntityNames(List<String> entityNames) {
+    protected List<String> findExistingEntityNames(Set<String> entityNames) {
         return nutrientRepository.findExistingNutrientNamesInDB(entityNames);
     }
 

@@ -14,8 +14,7 @@ public abstract class AbstractGeneralService<T, D> implements GeneralService<T> 
     @Transactional
     public void collectAndSaveNewEntities(List<RecipeDto> recipeDtos) {
         Map<String, D> namesDtoMap = collectUniqueDtos(recipeDtos);
-   List<String> entityNames = new ArrayList<>(namesDtoMap.keySet());
-       // Set<String> strings = new HashSet<>(namesDtoMap.keySet());//not reflect changes in original map
+        Set<String> entityNames = new HashSet<>(namesDtoMap.keySet());
         List<String> existingEntityNames = findExistingEntityNames(entityNames);
         if (existingEntityNames != null) {
             existingEntityNames.forEach(namesDtoMap::remove);
@@ -43,7 +42,7 @@ public abstract class AbstractGeneralService<T, D> implements GeneralService<T> 
 
     protected abstract T createEntity(D dto);
 
-    protected abstract List<String> findExistingEntityNames(List<String> entityNames);
+    protected abstract List<String> findExistingEntityNames(Set<String> entityNames);
 
     protected abstract void saveEntities(List<T> entities);
 

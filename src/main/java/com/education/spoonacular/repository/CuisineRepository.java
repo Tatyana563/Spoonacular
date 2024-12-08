@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Set;
 
 @Repository
 public interface CuisineRepository extends JpaRepository<Cuisine, Integer> {
@@ -14,7 +15,7 @@ public interface CuisineRepository extends JpaRepository<Cuisine, Integer> {
     List<Cuisine> findByNames(List<String> names);
 
     @Query("SELECT c.name FROM Cuisine c WHERE c.name IN :cuisineList ")
-    List<String> findExistingCuisineNamesInDB(@Param("cuisineList") List<String> cuisineList);
+    List<String> findExistingCuisineNamesInDB(@Param("cuisineList") Set<String> cuisineList);
 
 
 }

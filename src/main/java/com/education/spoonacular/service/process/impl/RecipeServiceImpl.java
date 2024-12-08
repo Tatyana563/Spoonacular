@@ -87,7 +87,7 @@ public class RecipeServiceImpl extends AbstractGeneralService<Recipe, RecipeDto>
     }
 //TODO:   protected List<String> findExistingEntityNames(--Set---<String> entityNames){
     @Override
-    protected List<String> findExistingEntityNames(List<String> entityNames) {
+    protected List<String> findExistingEntityNames(Set<String> entityNames) {
         Set<String> entityNamesSet = new HashSet<>(entityNames);
         return recipeRepository.findExistingRecipeNames(entityNamesSet);
     }

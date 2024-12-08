@@ -16,5 +16,5 @@ public interface NutrientRepository extends JpaRepository<Nutrient, Integer> {
     List<Nutrient> findByNames(List<String> name);
 
     @Query("SELECT n.name FROM Nutrient n WHERE n.name IN :nutrientDtoList ")
-    List<String> findExistingNutrientNamesInDB(List<String> nutrientDtoList);
+    List<String> findExistingNutrientNamesInDB(Set<String> nutrientDtoList);
 }
