@@ -7,6 +7,7 @@ import com.education.spoonacular.dto.RecipeDto;
 import com.education.spoonacular.dto.RecipeNutrientDto;
 import com.education.spoonacular.entity.Nutrient;
 import com.education.spoonacular.repository.NutrientRepository;
+import com.education.spoonacular.service.process.api.NutrientService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,7 +19,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class NutrientServiceImpl extends AbstractGeneralService<Nutrient, NutrientDto>  {
+public class NutrientServiceImpl extends AbstractGeneralService<Nutrient, NutrientDto> implements NutrientService {
     private final NutrientRepository nutrientRepository;
 
     @Override

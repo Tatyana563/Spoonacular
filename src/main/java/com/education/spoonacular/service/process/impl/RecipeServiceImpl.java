@@ -1,13 +1,8 @@
 package com.education.spoonacular.service.process.impl;
 
-import com.education.spoonacular.dto.DishDto;
-import com.education.spoonacular.dto.LunchRequestDto;
-import com.education.spoonacular.dto.RecipeDto;
-import com.education.spoonacular.dto.RecipeNutrientDto;
-import com.education.spoonacular.entity.Cuisine;
-import com.education.spoonacular.entity.Nutrient;
-import com.education.spoonacular.entity.Recipe;
-import com.education.spoonacular.entity.RecipeNutrient;
+import com.education.spoonacular.dto.*;
+import com.education.spoonacular.entity.*;
+import com.education.spoonacular.repository.IngredientRepository;
 import com.education.spoonacular.repository.NutrientRepository;
 import com.education.spoonacular.repository.RecipeRepository;
 import com.education.spoonacular.service.process.api.CuisineService;
@@ -20,9 +15,10 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class RecipeServiceImpl extends AbstractGeneralService<Recipe, RecipeDto> {
+public class RecipeServiceImpl extends AbstractGeneralService<Recipe, RecipeDto> implements  RecipeService{
     private final RecipeRepository recipeRepository;
     private final NutrientRepository nutrientRepository;
+    private final IngredientRepository ingredientRepository;
     private final CuisineService cuisineService;
 
 
@@ -58,18 +54,32 @@ public class RecipeServiceImpl extends AbstractGeneralService<Recipe, RecipeDto>
         recipeEntity.setCuisines(savedCuisines);
 
         List<RecipeNutrient> recipeNutrients = new ArrayList<>();
+        List<RecipeIngredient> recipeIngredients = new ArrayList<>();
 
         List<String> nutrientDtoNames = dto.getNutritionDto().getRecipeNutrientDtoList().stream().distinct().map(RecipeNutrientDto::getName).collect(Collectors.toList());
+        List<String> ingredientDtoNames = dto.getNutritionDto().getRecipeIngredientDto().stream().distinct().map(RecipeIngredientDto::getName).toList();
 
         List<Nutrient> nutrientRepositoryByName = nutrientRepository.findByNames(nutrientDtoNames);
+        List<Ingredient> ingredientRepositoryByName = ingredientRepository.findByNames(ingredientDtoNames);
 
         if (nutrientRepositoryByName.size() != nutrientDtoNames.size()) {
             throw new IllegalStateException(String.format("Nutrients amount from DB is not equivalent the required for recipe with name '%s' and url: '%s'",
                     dto.getName(), dto.getUrl()));
         }
+
+        if (ingredientRepositoryByName.size() != ingredientDtoNames.stream().distinct().collect(Collectors.toList()).size()) {
+            throw new IllegalStateException(String.format("Ingredients amount from DB is not equivalent the required for recipe with name '%s' and url: '%s'",
+                    dto.getName(), dto.getUrl()));
+        }
         Map<String, RecipeNutrientDto> recipeNutrientDtoMap = dto.getNutritionDto().getRecipeNutrientDtoList().stream().collect(Collectors.toMap(
                 RecipeNutrientDto::getName,
                 recipeNutrientDto -> recipeNutrientDto
+        ));
+
+        Map<String, RecipeIngredientDto> recipeIngredientDtoMap = dto.getNutritionDto().getRecipeIngredientDto().stream().collect(Collectors.toMap(
+                RecipeIngredientDto::getName,
+                recipeNutrientDto -> recipeNutrientDto,
+                (existing, replacement) -> existing
         ));
 
 
@@ -82,7 +92,17 @@ public class RecipeServiceImpl extends AbstractGeneralService<Recipe, RecipeDto>
             recipeNutrients.add(recipeNutrient);
         }
 
+        for (Ingredient ingredient : ingredientRepositoryByName) {
+
+            RecipeIngredient recipeIngredient = new RecipeIngredient();
+            recipeIngredient.setIngredient(ingredient);
+
+            recipeIngredient.setAmount(recipeIngredientDtoMap.get(ingredient.getName()).getAmount());
+            recipeIngredients.add(recipeIngredient);
+        }
+
         recipeEntity.setRecipeNutrients(recipeNutrients);
+        recipeEntity.setRecipeIngredients(recipeIngredients);
         return recipeEntity;
     }
 

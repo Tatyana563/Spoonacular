@@ -11,8 +11,8 @@ CREATE INDEX IF NOT EXISTS nutrient_name ON nutrient (name ASC);
 CREATE TABLE IF NOT EXISTS ingredient
 (
     id   serial PRIMARY KEY,
-    name varchar(50) UNIQUE not null,
-    unit varchar(20)        not null
+    name varchar(100) UNIQUE not null,
+    unit varchar(50)        not null
 );
 
 CREATE INDEX IF NOT EXISTS ingredient_name ON ingredient (name ASC);

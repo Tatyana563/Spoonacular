@@ -30,6 +30,13 @@ public class Recipe extends BaseEntity {
     )
     private List<RecipeNutrient> recipeNutrients;
 
+    @ElementCollection
+    @CollectionTable(
+            name = "recipe_ingredient",
+            joinColumns = @JoinColumn(name = "recipeid")
+    )
+    private List<RecipeIngredient> recipeIngredients;
+
    // @OneToMany(fetch = FetchType.EAGER)
     @OneToMany(fetch = FetchType.EAGER)
     @JoinTable(

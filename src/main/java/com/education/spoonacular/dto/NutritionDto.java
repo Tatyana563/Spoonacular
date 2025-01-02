@@ -13,5 +13,7 @@ import java.util.List;
 public class NutritionDto {
     @JsonProperty("nutrients")
     List<RecipeNutrientDto> recipeNutrientDtoList;
+    @JsonProperty("ingredients")
+    private List<RecipeIngredientDto> recipeIngredientDto;
 }
 //TODO: divide into packages inner and outer dtos

@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class CuisineServiceImpl extends AbstractGeneralService<Cuisine, String> {
+public class CuisineServiceImpl extends AbstractGeneralService<Cuisine, String> implements CuisineService{
     private final CuisineRepository cuisineRepository;
 
     @Override
