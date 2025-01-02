@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -17,9 +18,17 @@ public class MainServiceImpl implements MainService {
     private final IngredientService ingredientService;
 
     public void processResponse(List<RecipeDto> recipeDtos) {
-
+        List<RecipeDto> filteredRecipeDtos = filterRecipiesWithFaultIngredients(recipeDtos);
         List.of(cuisineService, nutrientService, ingredientService,recipeService)
-                .forEach(generalService -> generalService.collectAndSaveNewEntities(recipeDtos));
+                .forEach(generalService -> generalService.collectAndSaveNewEntities(filteredRecipeDtos));
     }
 
+    private List<RecipeDto> filterRecipiesWithFaultIngredients(List<RecipeDto> recipeDtos) {
+        return recipeDtos.stream()
+                .filter(recipeDto -> recipeDto.getNutritionDto() != null &&
+                        recipeDto.getNutritionDto().getRecipeIngredientDto() != null &&
+                        recipeDto.getNutritionDto().getRecipeIngredientDto().stream()
+                                .allMatch(dto -> dto.getUnit() != null && !dto.getUnit().isEmpty()))
+                .collect(Collectors.toList());
+    }
 }

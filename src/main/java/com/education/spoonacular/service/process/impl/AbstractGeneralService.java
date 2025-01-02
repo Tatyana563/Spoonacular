@@ -38,7 +38,6 @@ public abstract class AbstractGeneralService<T, D> implements GeneralService<T> 
     protected abstract String getUniqueIdentifier(D dto);
 
     protected abstract boolean isValidDto(D dto);
-
     protected abstract List<D> extractDtos(RecipeDto recipeDto);
 
     protected abstract T createEntity(D dto);

@@ -20,6 +20,10 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class MenuServiceImpl implements MenuService {
+    private static final String CALORIRS = "Calories";
+    private static final String CARBOHYDRATES = "Carbohydrates";
+    private static final String PROTEIN = "Protein";
+    private static final String FAT = "Fat";
     private final RecipeRepository recipeRepository;
 
     public List<DishDto> getSuggestedDishes(LunchRequestDto request) {
@@ -31,14 +35,13 @@ public class MenuServiceImpl implements MenuService {
         List<Recipe> suggestedRecipes = getSuggestedRecipes(cuisine, targetCalories);
         return convertRecipeToDishDtos(suggestedRecipes);
     }
-//TODO: mapstruct
+
+    //TODO: mapstruct
     public List<DishDto> convertRecipeToDishDtos(List<Recipe> suggestedRecipes) {
         return suggestedRecipes.stream().map(recipe -> {
             DishDto dishDto = new DishDto();
             dishDto.setName(recipe.getName());
-            dishDto.setCuisines(recipe.getCuisines().stream()
-                    .map(Cuisine::getName)
-                    .collect(Collectors.toList()));
+            dishDto.setCuisines(recipe.getCuisines().stream().map(Cuisine::getName).collect(Collectors.toList()));
             dishDto.setDescription(recipe.getSummary());
 
             NutritionalInfoDto nutritionalInfoDto = extractNutritionalInfo(recipe);
@@ -51,23 +54,19 @@ public class MenuServiceImpl implements MenuService {
     private NutritionalInfoDto extractNutritionalInfo(Recipe recipe) {
         NutritionalInfoDto nutritionalInfoDto = new NutritionalInfoDto();
 
-        Map<String, Double> nutrientsMap = recipe.getRecipeNutrients().stream()
-                .collect(Collectors.toMap(
-                        rn -> rn.getNutrient().getName(),
-                        RecipeNutrient::getAmount
-                ));
+        Map<String, Double> nutrientsMap = recipe.getRecipeNutrients().stream().collect(Collectors.toMap(rn -> rn.getNutrient().getName(), RecipeNutrient::getAmount));
 //TODO: use constants
-        nutritionalInfoDto.setCalories(getNutrientAmount(nutrientsMap, "Calories"));
-        nutritionalInfoDto.setCarbs(getNutrientAmount(nutrientsMap, "Carbohydrates"));
-        nutritionalInfoDto.setProtein(getNutrientAmount(nutrientsMap, "Protein"));
-        nutritionalInfoDto.setFat(getNutrientAmount(nutrientsMap, "Fat"));
+        nutritionalInfoDto.setCalories(getNutrientAmount(nutrientsMap, CALORIRS));
+        nutritionalInfoDto.setCarbs(getNutrientAmount(nutrientsMap, CARBOHYDRATES));
+        nutritionalInfoDto.setProtein(getNutrientAmount(nutrientsMap, PROTEIN));
+        nutritionalInfoDto.setFat(getNutrientAmount(nutrientsMap, FAT));
 
         return nutritionalInfoDto;
     }
 
     private Double getNutrientAmount(Map<String, Double> nutrientsMap, String nutrientName) {
-        return Optional.ofNullable(nutrientsMap.get(nutrientName))
-                .orElseThrow(() -> new IllegalArgumentException(nutrientName + " nutrient not found"));
+        return Optional.ofNullable(nutrientsMap.get(nutrientName)).orElseThrow(() ->
+                new IllegalArgumentException(nutrientName + " nutrient not found"));
     }
 
 
