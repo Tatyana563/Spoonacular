@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class RecipeServiceImpl extends AbstractGeneralService<Recipe, RecipeDto> implements RecipeService {
+public class RecipeServiceImpl extends AbstractGeneralService<Recipe, RecipeDto> {
     private final RecipeRepository recipeRepository;
     private final NutrientRepository nutrientRepository;
     private final CuisineService cuisineService;
@@ -85,7 +85,7 @@ public class RecipeServiceImpl extends AbstractGeneralService<Recipe, RecipeDto>
         recipeEntity.setRecipeNutrients(recipeNutrients);
         return recipeEntity;
     }
-//TODO:   protected List<String> findExistingEntityNames(--Set---<String> entityNames){
+
     @Override
     protected List<String> findExistingEntityNames(Set<String> entityNames) {
         Set<String> entityNamesSet = new HashSet<>(entityNames);
@@ -103,27 +103,4 @@ public class RecipeServiceImpl extends AbstractGeneralService<Recipe, RecipeDto>
         return recipeRepository.findExistingInDB(reciepeUrls).stream().toList();
     }
 
-
-    public List<DishDto> getSuggestedDishes(LunchRequestDto request) {
-
-        int targetCalories = calculateCalories(request.getGender(), request.getActivityLevel());
-
-        Set<String> cuisine = request.getCuisinePreferences();
-        Set<Integer> allergens = request.getIngredientsExclusions();
-        List<Recipe> suggestedRecipes = getSuggestedRecipes(cuisine, targetCalories);
-
-        return null;
-    }
-
-    private List<Recipe> getSuggestedRecipes(Set<String> cuisine, int targetCalories) {
-        return recipeRepository.getSuggestedRecipes(cuisine, targetCalories);
-    }
-
-    private int calculateCalories(String gender, String activityLevel) {
-        if (gender.equals("man")) {
-            return activityLevel.equals("active") ? 800 : 667;
-        } else {
-            return activityLevel.equals("active") ? 667 : 533;
-        }
-    }
 }

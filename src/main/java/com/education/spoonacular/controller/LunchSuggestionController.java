@@ -2,7 +2,8 @@ package com.education.spoonacular.controller;
 
 import com.education.spoonacular.dto.DishDto;
 import com.education.spoonacular.dto.LunchRequestDto;
-import com.education.spoonacular.service.process.api.RecipeService;
+import com.education.spoonacular.service.process.api.MenuService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,14 +15,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api")
+@RequiredArgsConstructor
 public class LunchSuggestionController {
 
-    @Autowired
-    private RecipeService recipeService;
+    private final MenuService menuService;
 
     @PostMapping("/suggest-lunch")
-    public ResponseEntity<List<DishDto>> suggestLunch(@RequestBody LunchRequestDto request) {
-        List<DishDto> suggestedDishes = recipeService.getSuggestedDishes(request);
-        return ResponseEntity.ok(suggestedDishes);
+    public List<DishDto> suggestLunch(@RequestBody LunchRequestDto request) {
+      return menuService.getSuggestedDishes(request);
+
     }
 }

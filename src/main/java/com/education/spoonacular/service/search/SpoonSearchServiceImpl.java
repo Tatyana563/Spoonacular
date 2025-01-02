@@ -12,7 +12,7 @@ import static org.springframework.http.HttpMethod.GET;
 
 @Service
 @RequiredArgsConstructor
-public class SpoonSearchServiceImpl implements SpoonSearchProcess {
+public class SpoonSearchServiceImpl implements SpoonSearchService {
     private final RestTemplate restTemplate;
     private final SpoonProperties properties;
 

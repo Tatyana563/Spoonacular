@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 //T - entity, D- dto
 public abstract class AbstractGeneralService<T, D> implements GeneralService<T> {
+    //TODO: add ingredients
     @Override
     @Transactional
     public void collectAndSaveNewEntities(List<RecipeDto> recipeDtos) {

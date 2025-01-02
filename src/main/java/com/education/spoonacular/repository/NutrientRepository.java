@@ -11,10 +11,10 @@ import java.util.Set;
 
 @Repository
 public interface NutrientRepository extends JpaRepository<Nutrient, Integer> {
-    //TODO: how will behave with duplicates
-    @Query("SELECT n FROM Nutrient n WHERE n.name IN :name ")
+
+    @Query("SELECT n FROM Nutrient n WHERE n.name IN :name")
     List<Nutrient> findByNames(List<String> name);
 
-    @Query("SELECT n.name FROM Nutrient n WHERE n.name IN :nutrientDtoList ")
+    @Query("SELECT n.name FROM Nutrient n WHERE n.name IN :nutrientDtoList")
     List<String> findExistingNutrientNamesInDB(Set<String> nutrientDtoList);
 }

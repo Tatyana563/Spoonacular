@@ -12,7 +12,7 @@ import java.util.List;
 public class DishDto {
     private String name;
     private String description;
-    private String cuisine;
+    private List<String> cuisines;
     private List<String> ingredients;
     private String instructions;
     private NutritionalInfoDto nutrition;

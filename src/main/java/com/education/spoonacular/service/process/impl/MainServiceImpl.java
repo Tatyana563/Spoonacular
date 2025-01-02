@@ -12,7 +12,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-//TODO: interface
+
 public class MainServiceImpl implements MainService {
     private final NutrientService nutrientService;
     private final CuisineService cuisineService;

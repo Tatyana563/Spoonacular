@@ -8,8 +8,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class NutritionalInfoDto {
-    private int calories;
-    private int protein;
-    private int carbs;
-    private int fat;
+    private double calories;
+    private double protein;
+    private double carbs;
+    private double fat;
 }

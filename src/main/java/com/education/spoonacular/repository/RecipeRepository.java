@@ -18,6 +18,10 @@ public interface RecipeRepository extends JpaRepository<Recipe, Integer> {
     @Query("SELECT r.url FROM Recipe r WHERE r.url IN :urls")
     List<String> findExistingRecipeNames(@Param("urls") Set<String> urls);
 
-    @Query(" SELECT DISTINCT r FROM Recipe r JOIN r.recipeNutrients rn  JOIN rn.nutrient n JOIN r.cuisines c WHERE n.name = 'Calories' AND rn.amount <= :targetCalories " + "AND c.name IN :cuisines ")
+
+    @Query(" SELECT DISTINCT r FROM Recipe r " +
+            " JOIN r.recipeNutrients rn  " +
+            " JOIN rn.nutrient n JOIN r.cuisines c" +
+            " WHERE n.name = 'Calories' AND rn.amount <= :targetCalories AND c.name IN :cuisines ")
     List<Recipe> getSuggestedRecipes(Set<String> cuisines, int targetCalories);
 }
