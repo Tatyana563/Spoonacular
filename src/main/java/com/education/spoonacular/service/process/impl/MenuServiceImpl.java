@@ -2,29 +2,22 @@ package com.education.spoonacular.service.process.impl;
 
 import com.education.spoonacular.dto.DishDto;
 import com.education.spoonacular.dto.LunchRequestDto;
-import com.education.spoonacular.dto.NutritionalInfoDto;
-import com.education.spoonacular.entity.Cuisine;
 import com.education.spoonacular.entity.Recipe;
-import com.education.spoonacular.entity.RecipeNutrient;
 import com.education.spoonacular.repository.RecipeRepository;
+import com.education.spoonacular.service.mapper.RecipeToDishDtoMapper;
 import com.education.spoonacular.service.process.api.MenuService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class MenuServiceImpl implements MenuService {
-    private static final String CALORIRS = "Calories";
-    private static final String CARBOHYDRATES = "Carbohydrates";
-    private static final String PROTEIN = "Protein";
-    private static final String FAT = "Fat";
     private final RecipeRepository recipeRepository;
+    private final RecipeToDishDtoMapper recipeToDishDtoMapper;
 
     public List<DishDto> getSuggestedDishes(LunchRequestDto request) {
 
@@ -39,34 +32,9 @@ public class MenuServiceImpl implements MenuService {
     //TODO: mapstruct
     public List<DishDto> convertRecipeToDishDtos(List<Recipe> suggestedRecipes) {
         return suggestedRecipes.stream().map(recipe -> {
-            DishDto dishDto = new DishDto();
-            dishDto.setName(recipe.getName());
-            dishDto.setCuisines(recipe.getCuisines().stream().map(Cuisine::getName).collect(Collectors.toList()));
-            dishDto.setDescription(recipe.getSummary());
-
-            NutritionalInfoDto nutritionalInfoDto = extractNutritionalInfo(recipe);
-            dishDto.setNutrition(nutritionalInfoDto);
-
+            DishDto dishDto = recipeToDishDtoMapper.mapRecipeToDishDto(recipe);
             return dishDto;
         }).collect(Collectors.toList());
-    }
-
-    private NutritionalInfoDto extractNutritionalInfo(Recipe recipe) {
-        NutritionalInfoDto nutritionalInfoDto = new NutritionalInfoDto();
-
-        Map<String, Double> nutrientsMap = recipe.getRecipeNutrients().stream().collect(Collectors.toMap(rn -> rn.getNutrient().getName(), RecipeNutrient::getAmount));
-//TODO: use constants
-        nutritionalInfoDto.setCalories(getNutrientAmount(nutrientsMap, CALORIRS));
-        nutritionalInfoDto.setCarbs(getNutrientAmount(nutrientsMap, CARBOHYDRATES));
-        nutritionalInfoDto.setProtein(getNutrientAmount(nutrientsMap, PROTEIN));
-        nutritionalInfoDto.setFat(getNutrientAmount(nutrientsMap, FAT));
-
-        return nutritionalInfoDto;
-    }
-
-    private Double getNutrientAmount(Map<String, Double> nutrientsMap, String nutrientName) {
-        return Optional.ofNullable(nutrientsMap.get(nutrientName)).orElseThrow(() ->
-                new IllegalArgumentException(nutrientName + " nutrient not found"));
     }
 
 

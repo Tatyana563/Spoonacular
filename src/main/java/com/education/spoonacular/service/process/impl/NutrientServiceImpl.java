@@ -7,6 +7,7 @@ import com.education.spoonacular.dto.RecipeDto;
 import com.education.spoonacular.dto.RecipeNutrientDto;
 import com.education.spoonacular.entity.Nutrient;
 import com.education.spoonacular.repository.NutrientRepository;
+import com.education.spoonacular.service.mapper.NutrientDtoToNutrientMapper;
 import com.education.spoonacular.service.process.api.NutrientService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class NutrientServiceImpl extends AbstractGeneralService<Nutrient, NutrientDto> implements NutrientService {
     private final NutrientRepository nutrientRepository;
+    private final NutrientDtoToNutrientMapper nutrientDtoToNutrientMapper;
 
     @Override
     public List<Nutrient> findByNames(List<String> name) {
@@ -56,10 +58,7 @@ public class NutrientServiceImpl extends AbstractGeneralService<Nutrient, Nutrie
     @Override
     //TODO: use mapstruct , read selma
     protected Nutrient createEntity(NutrientDto dto) {
-        Nutrient nutrientEntity = new Nutrient();
-        nutrientEntity.setName(dto.getName());
-        nutrientEntity.setUnit(dto.getUnit());
-        return nutrientEntity;
+        return nutrientDtoToNutrientMapper.mapNutrientDtoToNutrient(dto);
     }
 
     @Override

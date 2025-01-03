@@ -14,6 +14,5 @@ public class DishDto {
     private String description;
     private List<String> cuisines;
     private List<String> ingredients;
-    private String instructions;
     private NutritionalInfoDto nutrition;
 }
