@@ -1,6 +1,7 @@
 package com.education.spoonacular.repository;
 
 import com.education.spoonacular.entity.Recipe;
+import jakarta.persistence.Tuple;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -32,6 +33,6 @@ public interface RecipeRepository extends JpaRepository<Recipe, Integer> {
             "FROM Recipe r " +
             "JOIN r.recipeIngredients ri " +
             "WHERE r.id IN :recipeIds")
-    List<Object[]> getShoppingList(@Param("recipeIds") Set<Integer> recipeIds);
+    List<Tuple> getShoppingList(@Param("recipeIds") Set<Integer> recipeIds);
 
 }

@@ -8,6 +8,7 @@ import com.education.spoonacular.entity.Recipe;
 import com.education.spoonacular.repository.RecipeRepository;
 import com.education.spoonacular.service.mapper.RecipeToDishDtoMapper;
 import com.education.spoonacular.service.process.api.MenuService;
+import jakarta.persistence.Tuple;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -32,27 +33,29 @@ public class MenuServiceImpl implements MenuService {
 
     @Override
     public List<ShoppingListDto> getShoppingList(Set<Integer> dishIds) {
-        return mapFlatResultsToShoppingList(recipeRepository.getShoppingList(dishIds));
+        return mapTuplesToShoppingList(recipeRepository.getShoppingList(dishIds));
     }
 
-    public List<ShoppingListDto> mapFlatResultsToShoppingList(List<Object[]> flatResults) {
-        Map<Integer, ShoppingListDto> shoppingListMap = new HashMap<>();
+    public List<ShoppingListDto> mapTuplesToShoppingList(List<Tuple> tuples) {
+        Map<Integer, ShoppingListDto> groupedByRecipe = new HashMap<>();
 
-        for (Object[] row : flatResults) {
-            int recipeId = (Integer) row[0];
-            String dish = (String) row[1];
-            String ingredientName = (String) row[2];
-            String ingredientUnit = (String) row[3];
-            Double ingredientAmount = (Double) row[4];
+        for (Tuple tuple : tuples) {
+            int recipeId = tuple.get("id", Integer.class);
+            String dish = tuple.get("dish", String.class);
+            String ingredientName = tuple.get("ingredientName", String.class);
+            String ingredientUnit = tuple.get("ingredientUnit", String.class);
+            Double ingredientAmount = tuple.get("ingredientAmount", Double.class);
 
-            RecipeNutrientDto ingredient = new RecipeNutrientDto(ingredientName, ingredientUnit, ingredientAmount);
+            if (!groupedByRecipe.containsKey(recipeId)) {
+                ShoppingListDto shoppingListDto = new ShoppingListDto(recipeId, dish, new ArrayList<>());
+                groupedByRecipe.put(recipeId, shoppingListDto);
+            }
 
-            shoppingListMap.computeIfAbsent(recipeId, id -> new ShoppingListDto(id, dish, new ArrayList<>()))
-                    .getIngredients()
-                    .add(ingredient);
+            ShoppingListDto shoppingListDto = groupedByRecipe.get(recipeId);
+            shoppingListDto.getIngredients().add(new RecipeNutrientDto(ingredientName, ingredientUnit, ingredientAmount));
         }
 
-        return new ArrayList<>(shoppingListMap.values());
+        return new ArrayList<>(groupedByRecipe.values());
     }
 
     //TODO: mapstruct
