@@ -1,4 +1,4 @@
-package com.education.spoonacular.dto;
+package com.education.spoonacular.dto.menu;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

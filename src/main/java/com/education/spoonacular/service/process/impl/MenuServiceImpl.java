@@ -1,7 +1,9 @@
 package com.education.spoonacular.service.process.impl;
 
 import com.education.spoonacular.dto.DishDto;
-import com.education.spoonacular.dto.LunchRequestDto;
+import com.education.spoonacular.dto.RecipeNutrientDto;
+import com.education.spoonacular.dto.menu.LunchRequestDto;
+import com.education.spoonacular.dto.menu.ShoppingListDto;
 import com.education.spoonacular.entity.Recipe;
 import com.education.spoonacular.repository.RecipeRepository;
 import com.education.spoonacular.service.mapper.RecipeToDishDtoMapper;
@@ -9,8 +11,7 @@ import com.education.spoonacular.service.process.api.MenuService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,6 +28,31 @@ public class MenuServiceImpl implements MenuService {
         Set<Integer> allergens = request.getIngredientsExclusions();
         List<Recipe> suggestedRecipes = getSuggestedRecipes(cuisine, targetCalories);
         return convertRecipeToDishDtos(suggestedRecipes);
+    }
+
+    @Override
+    public List<ShoppingListDto> getShoppingList(Set<Integer> dishIds) {
+        return mapFlatResultsToShoppingList(recipeRepository.getShoppingList(dishIds));
+    }
+
+    public List<ShoppingListDto> mapFlatResultsToShoppingList(List<Object[]> flatResults) {
+        Map<Integer, ShoppingListDto> shoppingListMap = new HashMap<>();
+
+        for (Object[] row : flatResults) {
+            int recipeId = (Integer) row[0];
+            String dish = (String) row[1];
+            String ingredientName = (String) row[2];
+            String ingredientUnit = (String) row[3];
+            Double ingredientAmount = (Double) row[4];
+
+            RecipeNutrientDto ingredient = new RecipeNutrientDto(ingredientName, ingredientUnit, ingredientAmount);
+
+            shoppingListMap.computeIfAbsent(recipeId, id -> new ShoppingListDto(id, dish, new ArrayList<>()))
+                    .getIngredients()
+                    .add(ingredient);
+        }
+
+        return new ArrayList<>(shoppingListMap.values());
     }
 
     //TODO: mapstruct

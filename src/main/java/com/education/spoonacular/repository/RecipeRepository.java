@@ -24,4 +24,14 @@ public interface RecipeRepository extends JpaRepository<Recipe, Integer> {
             " JOIN rn.nutrient n JOIN r.cuisines c" +
             " WHERE n.name = 'Calories' AND rn.amount <= :targetCalories AND c.name IN :cuisines ")
     List<Recipe> getSuggestedRecipes(Set<String> cuisines, int targetCalories);
+
+    //https://thorben-janssen.com/spring-data-jpa-query-projections/
+    // Scalar Projections
+    @Query("SELECT r.id AS id, r.name AS dish, " +
+            "ri.ingredient.name AS ingredientName, ri.ingredient.unit AS ingredientUnit, ri.amount AS ingredientAmount " +
+            "FROM Recipe r " +
+            "JOIN r.recipeIngredients ri " +
+            "WHERE r.id IN :recipeIds")
+    List<Object[]> getShoppingList(@Param("recipeIds") Set<Integer> recipeIds);
+
 }
