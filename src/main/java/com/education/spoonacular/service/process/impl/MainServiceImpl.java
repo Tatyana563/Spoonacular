@@ -28,7 +28,7 @@ public class MainServiceImpl implements MainService {
                 .filter(recipeDto -> recipeDto.getNutritionDto() != null &&
                         recipeDto.getNutritionDto().getRecipeIngredientDto() != null &&
                         recipeDto.getNutritionDto().getRecipeIngredientDto().stream()
-                                .allMatch(dto -> dto.getUnit() != null && !dto.getUnit().isEmpty()))
+                                .allMatch(dto -> dto.getUnit() != null && !dto.getUnit().isEmpty()&& dto.getAmount() != null))
                 .collect(Collectors.toList());
     }
 }

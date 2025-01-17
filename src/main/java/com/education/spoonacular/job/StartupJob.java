@@ -6,12 +6,15 @@ import com.education.spoonacular.dto.RecipeDto;
 import com.education.spoonacular.dto.ResponseDto;
 import com.education.spoonacular.service.process.api.MainService;
 import com.education.spoonacular.service.search.SpoonSearchService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +45,7 @@ public class StartupJob implements ApplicationRunner {
             List<RecipeDto> recipeDto = dataByDishAndAmount.getResults();
             recipeDtos.addAll(recipeDto);
         }
-
+        writeToFile(recipeDtos);
         return recipeDtos;
     }
 
@@ -52,7 +55,8 @@ public class StartupJob implements ApplicationRunner {
         Stream<RecipeDto> filteredWithoutDuplicates = removeDuplicates(filteredRecipes);
         mainService.processResponse(filteredWithoutDuplicates.collect(Collectors.toList()));
     }
-//TODO: filter recipes if Calories and so on in null;
+
+    //TODO: filter recipes if Calories and so on in null;
     private Stream<RecipeDto> filterIncompleteRecipes(List<RecipeDto> recipeDtos) {
         return recipeDtos.stream()
                 .filter(recipeDto -> !recipeDto.getUrl().isEmpty());
@@ -70,11 +74,26 @@ public class StartupJob implements ApplicationRunner {
     }
 
     @Override
-    public void run(ApplicationArguments args) {
-        List<RecipeDto> recipeDtoList = fetchData();
-        processData(recipeDtoList);
+    public void run(ApplicationArguments args) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        //List<RecipeDto> recipes = fetchData();
+        List<RecipeDto> recipes = objectMapper.readValue(new File("recipes.json"),
+                objectMapper.getTypeFactory().constructCollectionType(List.class, RecipeDto.class));
+        processData(recipes);
     }
 
+    private void writeToFile(List<RecipeDto> recipeDtoList) {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            // Write JSON to file
+            objectMapper.writerWithDefaultPrettyPrinter().writeValue(new File("recipes.json"), recipeDtoList);
+
+            System.out.println("Recipes written to file in JSON format successfully!");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }
 
 

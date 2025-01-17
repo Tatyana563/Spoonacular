@@ -14,10 +14,10 @@ public abstract class AbstractGeneralService<T, D> implements GeneralService<T> 
     @Override
     @Transactional
     public void collectAndSaveNewEntities(List<RecipeDto> recipeDtos) {
-        Map<String, D> namesDtoMap = collectUniqueDtos(recipeDtos);
+       Map<String, D> namesDtoMap = collectUniqueDtos(recipeDtos);
         Set<String> entityNames = new HashSet<>(namesDtoMap.keySet());
         List<String> existingEntityNames = findExistingEntityNames(entityNames);
-        if (existingEntityNames != null) {
+        if (!existingEntityNames.isEmpty()) {
             existingEntityNames.forEach(namesDtoMap::remove);
         }
         List<T> entities = namesDtoMap.values().stream().map(this::createEntity).collect(Collectors.toList());
