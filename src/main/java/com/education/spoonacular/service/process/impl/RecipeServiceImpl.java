@@ -79,7 +79,10 @@ public class RecipeServiceImpl extends AbstractGeneralService<Recipe, RecipeDto>
         Map<String, RecipeIngredientDto> recipeIngredientDtoMap = dto.getNutritionDto().getRecipeIngredientDto().stream().collect(Collectors.toMap(
                 RecipeIngredientDto::getName,
                 recipeNutrientDto -> recipeNutrientDto,
-                (existing, replacement) -> existing
+                (existing, replacement) -> {
+                    existing.setAmount(existing.getAmount() + replacement.getAmount());
+                    return existing;
+                }
         ));
 
 
