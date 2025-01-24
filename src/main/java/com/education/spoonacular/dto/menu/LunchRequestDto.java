@@ -10,8 +10,7 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 public class LunchRequestDto {
-    private String gender; // "man" or "woman"
-    private String activityLevel; // "active" or "not_active"
+private IndividualCharacteristicsDto characteristicsDto;
     private Set<String> cuisinePreferences;
     private Set<String> ingredientsExclusions;
 }
