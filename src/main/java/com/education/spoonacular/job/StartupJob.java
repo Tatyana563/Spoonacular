@@ -4,6 +4,7 @@ import com.education.spoonacular.config.JobConfig;
 import com.education.spoonacular.config.JobProperties;
 import com.education.spoonacular.dto.fetch.RecipeDto;
 import com.education.spoonacular.dto.fetch.ResponseDto;
+import com.education.spoonacular.dto.menu.MealType;
 import com.education.spoonacular.service.process.api.MainService;
 import com.education.spoonacular.service.search.SpoonSearchService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,10 +16,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -29,6 +27,15 @@ import java.util.stream.Stream;
 @Component
 @RequiredArgsConstructor
 public class StartupJob implements ApplicationRunner {
+    private static final List<String> BREAKFAST_DISHES = Arrays.asList("pancakes");
+    private static final List<String> LUNCH_DISHES = Arrays.asList("soup");
+    private static final List<String> DINNER_DISHES = Arrays.asList("pasta");
+
+    public static final Map<String, List<String>> MEAL_DISH;
+
+    static {
+        MEAL_DISH = Map.of("Breakfast", BREAKFAST_DISHES, "Lunch", LUNCH_DISHES, "Dinner", DINNER_DISHES);
+    }
 
     private final SpoonSearchService spoonSearchService;
     private final MainService mainService;
@@ -43,11 +50,30 @@ public class StartupJob implements ApplicationRunner {
             JobProperties value = entry.getValue();
             ResponseDto dataByDishAndAmount = spoonSearchService.getDataByDishAndAmount(dish, value.getAmount());
             List<RecipeDto> recipeDto = dataByDishAndAmount.getResults();
+            MealType mealType = determineMealType(dish);
+            recipeDto.stream().forEach(recipeDto1 -> recipeDto1.setMealType(mealType));
             recipeDtos.addAll(recipeDto);
         }
         writeToFile(recipeDtos);
         return recipeDtos;
     }
+
+    private MealType determineMealType(String dish) {
+        for (Map.Entry<String, List<String>> entry : MEAL_DISH.entrySet()) {
+            String mealType = entry.getKey();
+            List<String> dishes = entry.getValue();
+
+            if (dishes.contains(dish)) {
+                try {
+                    return MealType.valueOf(mealType.toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    throw new IllegalArgumentException("Invalid MealType mapping for: " + mealType, e);
+                }
+            }
+        }
+        throw new IllegalArgumentException("MealType can't be determined for dish: " + dish);
+    }
+
 
     private void processData(List<RecipeDto> recipeDtos) {
         //TODO: combine 2 filter methods in 1 and use Predicate as constants
@@ -57,7 +83,7 @@ public class StartupJob implements ApplicationRunner {
 
     //TODO: filter recipes if Calories and so on in null;
 
-/* filter incomplete recipes and remove duplicates*/
+    /* filter incomplete recipes and remove duplicates*/
     private Stream<RecipeDto> filterRecipes(List<RecipeDto> recipeDtos) {
         return recipeDtos.stream()
                 .filter(recipeDto -> !recipeDto.getUrl().isEmpty())
@@ -73,11 +99,11 @@ public class StartupJob implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws IOException {
-    //    ObjectMapper objectMapper = new ObjectMapper();
-        List<RecipeDto> recipes = fetchData();
+        //    ObjectMapper objectMapper = new ObjectMapper();
+      //  List<RecipeDto> recipes = fetchData();
 //        List<RecipeDto> recipes = objectMapper.readValue(new File("recipes.json"),
 //                objectMapper.getTypeFactory().constructCollectionType(List.class, RecipeDto.class));
-  processData(recipes);
+   //     processData(recipes);
     }
 
     private void writeToFile(List<RecipeDto> recipeDtoList) {

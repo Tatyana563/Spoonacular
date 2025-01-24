@@ -1,5 +1,6 @@
 package com.education.spoonacular.repository;
 
+import com.education.spoonacular.dto.menu.MealType;
 import com.education.spoonacular.entity.Recipe;
 import jakarta.persistence.Tuple;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -44,9 +45,10 @@ public interface RecipeRepository extends JpaRepository<Recipe, Integer> {
         "JOIN r.cuisines c " +
         "WHERE n.name = 'Calories' AND rn.amount <= :targetCalories " +
         "AND c.name IN :cuisines " +
+        "AND r.dishType = :mealType " +
         "GROUP BY r.id " +
         "HAVING SUM(CASE WHEN ri.ingredient.name IN :allergies THEN 1 ELSE 0 END) < 1")
-List<Recipe> getSuggestedRecipes(Set<String> cuisines, int targetCalories, Set<String> allergies);
+List<Recipe> getSuggestedRecipes(Set<String> cuisines, int targetCalories, Set<String> allergies, String mealType);
 
 
 //https://thorben-janssen.com/spring-data-jpa-query-projections/

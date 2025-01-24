@@ -47,7 +47,7 @@ public class RecipeServiceImpl extends AbstractGeneralService<Recipe, RecipeDto>
         recipeEntity.setVegetarian(dto.isVegetarian());
         recipeEntity.setReadyInMinutes(dto.getPreparationTime());
         recipeEntity.setUrl(dto.getUrl());
-
+        recipeEntity.setDishType(dto.getMealType().name());
         List<Cuisine> savedCuisines = cuisineService.findByNames(dto.getCuisines());
         if (savedCuisines.size() != dto.getCuisines().size()) {
             throw new IllegalStateException(String.format("Cuisines were not found for recipe with name '%s' and url: '%s'",

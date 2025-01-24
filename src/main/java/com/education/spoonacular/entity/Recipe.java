@@ -14,6 +14,8 @@ import java.util.Set;
 public class Recipe extends BaseEntity {
     @Column(name = "name", nullable = false)
     private String name;
+    @Column(name = "dish_type", nullable = false)
+    private String dishType;
     @Column(name = "url", nullable = false)
     private String url;
     @Column(name = "summary", nullable = false)

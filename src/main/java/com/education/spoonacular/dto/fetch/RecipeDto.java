@@ -1,5 +1,6 @@
 package com.education.spoonacular.dto.fetch;
 
+import com.education.spoonacular.dto.menu.MealType;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
@@ -25,4 +26,5 @@ public class RecipeDto implements Serializable {
     @JsonProperty("nutrition")
     private NutritionDto nutritionDto;
     private List<String> cuisines;
+    private MealType mealType;
 }

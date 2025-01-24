@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS recipe
     name           text        not null,
     vegetarian     boolean default false not null,
     summary        text,
+    dish_type      text,
     url            text UNIQUE           not null,
     readyInMinutes int
 );
