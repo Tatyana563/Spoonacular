@@ -35,16 +35,11 @@ public interface RecipeToDishDtoMapper {
                 .collect(Collectors.toList());
     }
 
-    default List<String> mapIngredientsToNames(List<RecipeIngredient> recipeIngredients) {
-        if (recipeIngredients == null) {
-            return Collections.emptyList();
-        }
-        return recipeIngredients.stream()
-                .map(ri -> ri.getIngredient().getName())
-                .collect(Collectors.toList());
+    default String mapIngredientsToNames(RecipeIngredient recipeIngredient) {
+        return recipeIngredient.getIngredient().getName();
     }
 
-    default NutritionalInfoDto mapNutritionalInfo(Recipe recipe) {
+        default NutritionalInfoDto mapNutritionalInfo(Recipe recipe) {
         NutritionalInfoDto nutritionalInfoDto = new NutritionalInfoDto();
 
         Map<String, Double> nutrientsMap = recipe.getRecipeNutrients().stream().collect(Collectors.toMap(rn -> rn.getNutrient().getName(), RecipeNutrient::getAmount));

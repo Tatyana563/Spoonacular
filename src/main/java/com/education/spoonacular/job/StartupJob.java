@@ -51,15 +51,17 @@ public class StartupJob implements ApplicationRunner {
 
     private void processData(List<RecipeDto> recipeDtos) {
         //TODO: combine 2 filter methods in 1 and use Predicate as constants
-        Stream<RecipeDto> filteredRecipes = filterIncompleteRecipes(recipeDtos);
-        Stream<RecipeDto> filteredWithoutDuplicates = removeDuplicates(filteredRecipes);
-        mainService.processResponse(filteredWithoutDuplicates.collect(Collectors.toList()));
+        Stream<RecipeDto> filteredRecipes = filterRecipes(recipeDtos);
+        mainService.processResponse(filteredRecipes.collect(Collectors.toList()));
     }
 
     //TODO: filter recipes if Calories and so on in null;
-    private Stream<RecipeDto> filterIncompleteRecipes(List<RecipeDto> recipeDtos) {
+
+/* filter incomplete recipes and remove duplicates*/
+    private Stream<RecipeDto> filterRecipes(List<RecipeDto> recipeDtos) {
         return recipeDtos.stream()
-                .filter(recipeDto -> !recipeDto.getUrl().isEmpty());
+                .filter(recipeDto -> !recipeDto.getUrl().isEmpty())
+                .filter(distinctByKey(RecipeDto::getUrl));
 
     }
 
@@ -68,18 +70,14 @@ public class StartupJob implements ApplicationRunner {
         return t -> seen.add(keyExtractor.apply(t));
     }
 
-    public Stream<RecipeDto> removeDuplicates(Stream<RecipeDto> recipes) {
-        return recipes
-                .filter(distinctByKey(RecipeDto::getUrl));
-    }
 
     @Override
     public void run(ApplicationArguments args) throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        //List<RecipeDto> recipes = fetchData();
-        List<RecipeDto> recipes = objectMapper.readValue(new File("recipes.json"),
-                objectMapper.getTypeFactory().constructCollectionType(List.class, RecipeDto.class));
-        processData(recipes);
+    //    ObjectMapper objectMapper = new ObjectMapper();
+        List<RecipeDto> recipes = fetchData();
+//        List<RecipeDto> recipes = objectMapper.readValue(new File("recipes.json"),
+//                objectMapper.getTypeFactory().constructCollectionType(List.class, RecipeDto.class));
+  processData(recipes);
     }
 
     private void writeToFile(List<RecipeDto> recipeDtoList) {

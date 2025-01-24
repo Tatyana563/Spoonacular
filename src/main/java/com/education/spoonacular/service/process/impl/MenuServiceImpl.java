@@ -26,8 +26,8 @@ public class MenuServiceImpl implements MenuService {
         int targetCalories = calculateCalories(request.getGender(), request.getActivityLevel());
 
         Set<String> cuisine = request.getCuisinePreferences();
-        Set<Integer> allergens = request.getIngredientsExclusions();
-        List<Recipe> suggestedRecipes = getSuggestedRecipes(cuisine, targetCalories);
+        Set<String> allergens = request.getIngredientsExclusions();
+        List<Recipe> suggestedRecipes = getSuggestedRecipes(cuisine, targetCalories, allergens);
         return convertRecipeToDishDtos(suggestedRecipes);
     }
 
@@ -67,8 +67,8 @@ public class MenuServiceImpl implements MenuService {
     }
 
 
-    private List<Recipe> getSuggestedRecipes(Set<String> cuisine, int targetCalories) {
-        return recipeRepository.getSuggestedRecipes(cuisine, targetCalories);
+    private List<Recipe> getSuggestedRecipes(Set<String> cuisine, int targetCalories, Set<String> allergies) {
+        return recipeRepository.getSuggestedRecipes(cuisine, targetCalories, allergies);
     }
 
     private int calculateCalories(String gender, String activityLevel) {

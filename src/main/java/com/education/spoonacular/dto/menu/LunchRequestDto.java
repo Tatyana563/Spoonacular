@@ -13,5 +13,5 @@ public class LunchRequestDto {
     private String gender; // "man" or "woman"
     private String activityLevel; // "active" or "not_active"
     private Set<String> cuisinePreferences;
-    private Set<Integer> ingredientsExclusions;
+    private Set<String> ingredientsExclusions;
 }
