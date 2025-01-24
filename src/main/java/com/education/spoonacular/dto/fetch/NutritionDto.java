@@ -1,4 +1,4 @@
-package com.education.spoonacular.dto;
+package com.education.spoonacular.dto.fetch;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;

@@ -1,6 +1,6 @@
 package com.education.spoonacular.service.process.impl;
 
-import com.education.spoonacular.dto.RecipeDto;
+import com.education.spoonacular.dto.fetch.RecipeDto;
 import com.education.spoonacular.service.process.api.GeneralService;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 
 //T - entity, D- dto
 public abstract class AbstractGeneralService<T, D> implements GeneralService<T> {
-    //TODO: add ingredients
+
     @Override
     @Transactional
     public void collectAndSaveNewEntities(List<RecipeDto> recipeDtos) {

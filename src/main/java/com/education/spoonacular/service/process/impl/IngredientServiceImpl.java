@@ -1,10 +1,10 @@
 package com.education.spoonacular.service.process.impl;
 
 
-import com.education.spoonacular.dto.IngredientDto;
-import com.education.spoonacular.dto.NutritionDto;
-import com.education.spoonacular.dto.RecipeDto;
-import com.education.spoonacular.dto.RecipeIngredientDto;
+import com.education.spoonacular.dto.fetch.IngredientDto;
+import com.education.spoonacular.dto.fetch.NutritionDto;
+import com.education.spoonacular.dto.fetch.RecipeDto;
+import com.education.spoonacular.dto.fetch.RecipeIngredientDto;
 import com.education.spoonacular.entity.Ingredient;
 import com.education.spoonacular.repository.IngredientRepository;
 import com.education.spoonacular.service.process.api.IngredientService;

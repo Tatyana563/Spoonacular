@@ -2,8 +2,8 @@ package com.education.spoonacular.job;
 
 import com.education.spoonacular.config.JobConfig;
 import com.education.spoonacular.config.JobProperties;
-import com.education.spoonacular.dto.RecipeDto;
-import com.education.spoonacular.dto.ResponseDto;
+import com.education.spoonacular.dto.fetch.RecipeDto;
+import com.education.spoonacular.dto.fetch.ResponseDto;
 import com.education.spoonacular.service.process.api.MainService;
 import com.education.spoonacular.service.search.SpoonSearchService;
 import com.fasterxml.jackson.databind.ObjectMapper;

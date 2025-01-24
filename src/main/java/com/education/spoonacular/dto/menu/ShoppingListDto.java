@@ -1,6 +1,6 @@
 package com.education.spoonacular.dto.menu;
 
-import com.education.spoonacular.dto.RecipeNutrientDto;
+import com.education.spoonacular.dto.fetch.RecipeNutrientDto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;

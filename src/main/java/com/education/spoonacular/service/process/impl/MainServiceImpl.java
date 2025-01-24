@@ -1,6 +1,6 @@
 package com.education.spoonacular.service.process.impl;
 
-import com.education.spoonacular.dto.RecipeDto;
+import com.education.spoonacular.dto.fetch.RecipeDto;
 import com.education.spoonacular.service.process.api.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

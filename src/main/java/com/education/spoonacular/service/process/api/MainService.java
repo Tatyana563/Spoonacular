@@ -1,7 +1,6 @@
 package com.education.spoonacular.service.process.api;
 
-import com.education.spoonacular.dto.RecipeDto;
-import com.education.spoonacular.entity.Cuisine;
+import com.education.spoonacular.dto.fetch.RecipeDto;
 
 import java.util.List;
 

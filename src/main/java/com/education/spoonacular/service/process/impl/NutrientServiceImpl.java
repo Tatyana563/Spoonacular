@@ -1,10 +1,10 @@
 package com.education.spoonacular.service.process.impl;
 
 
-import com.education.spoonacular.dto.NutrientDto;
-import com.education.spoonacular.dto.NutritionDto;
-import com.education.spoonacular.dto.RecipeDto;
-import com.education.spoonacular.dto.RecipeNutrientDto;
+import com.education.spoonacular.dto.fetch.NutrientDto;
+import com.education.spoonacular.dto.fetch.NutritionDto;
+import com.education.spoonacular.dto.fetch.RecipeDto;
+import com.education.spoonacular.dto.fetch.RecipeNutrientDto;
 import com.education.spoonacular.entity.Nutrient;
 import com.education.spoonacular.repository.NutrientRepository;
 import com.education.spoonacular.service.mapper.NutrientDtoToNutrientMapper;

@@ -1,4 +1,4 @@
-package com.education.spoonacular.dto;
+package com.education.spoonacular.dto.fetch;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
@@ -9,7 +9,7 @@ import lombok.*;
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 @ToString
-public class NutrientDto {
+public class IngredientDto {
     private String name;
     private String unit;
 

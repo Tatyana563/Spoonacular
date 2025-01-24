@@ -1,7 +1,7 @@
 package com.education.spoonacular.service.process.impl;
 
 
-import com.education.spoonacular.dto.RecipeDto;
+import com.education.spoonacular.dto.fetch.RecipeDto;
 import com.education.spoonacular.entity.Cuisine;
 import com.education.spoonacular.repository.CuisineRepository;
 import com.education.spoonacular.service.process.api.CuisineService;

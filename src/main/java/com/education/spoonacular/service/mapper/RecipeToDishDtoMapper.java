@@ -1,7 +1,7 @@
 package com.education.spoonacular.service.mapper;
 
-import com.education.spoonacular.dto.DishDto;
-import com.education.spoonacular.dto.NutritionalInfoDto;
+import com.education.spoonacular.dto.fetch.DishDto;
+import com.education.spoonacular.dto.fetch.NutritionalInfoDto;
 import com.education.spoonacular.entity.Cuisine;
 import com.education.spoonacular.entity.Recipe;
 import com.education.spoonacular.entity.RecipeIngredient;
@@ -43,7 +43,7 @@ public interface RecipeToDishDtoMapper {
         NutritionalInfoDto nutritionalInfoDto = new NutritionalInfoDto();
 
         Map<String, Double> nutrientsMap = recipe.getRecipeNutrients().stream().collect(Collectors.toMap(rn -> rn.getNutrient().getName(), RecipeNutrient::getAmount));
-//TODO: use constants
+
         nutritionalInfoDto.setCalories(getNutrientAmount(nutrientsMap, CALORIRS));
         nutritionalInfoDto.setCarbs(getNutrientAmount(nutrientsMap, CARBOHYDRATES));
         nutritionalInfoDto.setProtein(getNutrientAmount(nutrientsMap, PROTEIN));

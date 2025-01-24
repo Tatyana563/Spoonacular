@@ -1,7 +1,7 @@
 package com.education.spoonacular.service.search;
 
 import com.education.spoonacular.config.SpoonProperties;
-import com.education.spoonacular.dto.ResponseDto;
+import com.education.spoonacular.dto.fetch.ResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
