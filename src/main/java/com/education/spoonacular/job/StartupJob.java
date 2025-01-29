@@ -28,8 +28,8 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class StartupJob implements ApplicationRunner {
     private static final List<String> BREAKFAST_DISHES = Arrays.asList("pancakes");
-    private static final List<String> LUNCH_DISHES = Arrays.asList("soup");
-    private static final List<String> DINNER_DISHES = Arrays.asList("pasta");
+    private static final List<String> LUNCH_DISHES = Arrays.asList("soup","pasta");
+    private static final List<String> DINNER_DISHES = Arrays.asList("salad");
 
     public static final Map<String, List<String>> MEAL_DISH;
 
@@ -99,18 +99,17 @@ public class StartupJob implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws IOException {
-        //    ObjectMapper objectMapper = new ObjectMapper();
-      //  List<RecipeDto> recipes = fetchData();
-//        List<RecipeDto> recipes = objectMapper.readValue(new File("recipes.json"),
-//                objectMapper.getTypeFactory().constructCollectionType(List.class, RecipeDto.class));
-   //     processData(recipes);
+ // ObjectMapper objectMapper = new ObjectMapper();
+  List<RecipeDto> recipes = fetchData();
+  //  List<RecipeDto> recipes = objectMapper.readValue(new File("recipes.json"),
+  //        objectMapper.getTypeFactory().constructCollectionType(List.class, RecipeDto.class));
+   processData(recipes);
     }
 
     private void writeToFile(List<RecipeDto> recipeDtoList) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
 
-            // Write JSON to file
             objectMapper.writerWithDefaultPrettyPrinter().writeValue(new File("recipes.json"), recipeDtoList);
 
             System.out.println("Recipes written to file in JSON format successfully!");

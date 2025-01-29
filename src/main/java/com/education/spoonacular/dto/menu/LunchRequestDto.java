@@ -11,6 +11,6 @@ import java.util.Set;
 @NoArgsConstructor
 public class LunchRequestDto {
 private IndividualCharacteristicsDto characteristicsDto;
-    private Set<String> cuisinePreferences;
+    private Set<Long> cuisinePreferences;
     private Set<String> ingredientsExclusions;
 }

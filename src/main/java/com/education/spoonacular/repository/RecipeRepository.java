@@ -1,6 +1,5 @@
 package com.education.spoonacular.repository;
 
-import com.education.spoonacular.dto.menu.MealType;
 import com.education.spoonacular.entity.Recipe;
 import jakarta.persistence.Tuple;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,39 +18,32 @@ public interface RecipeRepository extends JpaRepository<Recipe, Integer> {
 
     @Query("SELECT r.url FROM Recipe r WHERE r.url IN :urls")
     List<String> findExistingRecipeNames(@Param("urls") Set<String> urls);
-//TODO:
-// subquery count of ingredient ri.ingredient.name IN (:allergies) = 0, use Grouping by and having
-// QUESTION return Recipe or DTO
-//WORKS
-//@Query("SELECT r FROM Recipe r " +
-//        "JOIN r.recipeNutrients rn " +
-//        "JOIN r.recipeIngredients ri " +
-//        "JOIN rn.nutrient n " +
-//        "JOIN r.cuisines c " +
-//        "WHERE n.name = 'Calories' AND rn.amount <= :targetCalories " +
-//        "AND c.name IN :cuisines " +
-//        "AND r.id NOT IN (" +
-//        "  SELECT rSub.id FROM Recipe rSub " +
-//        "  JOIN rSub.recipeIngredients riSub " +
-//        "  WHERE riSub.ingredient.name IN :allergies" +
-//        ")")
-//List<Recipe> getSuggestedRecipes(Set<String> cuisines, int targetCalories, Set<String> allergies);
 
-    //WORKS
-@Query("SELECT r FROM Recipe r " +
-        "JOIN r.recipeNutrients rn " +
-        "JOIN r.recipeIngredients ri " +
-        "JOIN rn.nutrient n " +
-        "JOIN r.cuisines c " +
-        "WHERE n.name = 'Calories' AND rn.amount <= :targetCalories " +
-        "AND c.name IN :cuisines " +
-        "AND r.dishType = :mealType " +
-        "GROUP BY r.id " +
-        "HAVING SUM(CASE WHEN ri.ingredient.name IN :allergies THEN 1 ELSE 0 END) < 1")
-List<Recipe> getSuggestedRecipes(Set<String> cuisines, int targetCalories, Set<String> allergies, String mealType);
+    @Query(value = """
+                SELECT r.recipe_id AS recipeId,
+                       r.recipe_name AS recipeName,
+                       r.dish_type AS dishType,
+                       array_agg(DISTINCT rc.cuisineid) AS cuisines, 
+                       r.nutrient AS nutrient,
+                       r.ingredient AS ingredient
+                FROM recipe_nutrient_view r
+                JOIN recipe_cuisine rc ON r.recipe_id = rc.recipeid  
+                WHERE EXISTS (
+                    SELECT 1 
+                    FROM jsonb_array_elements(r.nutrient) AS elem
+                    WHERE elem->>'name' = 'Calories'
+                      AND CAST(elem->>'amount' AS DOUBLE PRECISION) < :targetCalories
+                )
+                AND rc.cuisineid = ANY(:cuisines) 
+                AND r.dish_type = :mealType
+                GROUP BY r.recipe_id, r.recipe_name, r.dish_type, r.nutrient, r.ingredient 
+            """, nativeQuery = true)
+    List<Tuple> findBasicRecipes(@Param("cuisines") Long[] cuisines,
+                                 @Param("targetCalories") double targetCalories,
+                                 @Param("mealType") String mealType);
 
 
-//https://thorben-janssen.com/spring-data-jpa-query-projections/
+    //https://thorben-janssen.com/spring-data-jpa-query-projections/
     // Scalar Projections
     @Query("SELECT r.id AS id, r.name AS dish, " +
             "ri.ingredient.name AS ingredientName, ri.ingredient.unit AS ingredientUnit, ri.amount AS ingredientAmount " +

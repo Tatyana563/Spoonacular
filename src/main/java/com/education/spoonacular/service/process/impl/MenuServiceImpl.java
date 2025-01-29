@@ -1,33 +1,37 @@
 package com.education.spoonacular.service.process.impl;
 
-import com.education.spoonacular.dto.fetch.DishDto;
+import com.education.spoonacular.db_view.RecipeDTO;
+import com.education.spoonacular.db_view.ViewIngredient;
+import com.education.spoonacular.db_view.ViewNutrient;
 import com.education.spoonacular.dto.fetch.RecipeNutrientDto;
 import com.education.spoonacular.dto.menu.*;
-import com.education.spoonacular.entity.Recipe;
 import com.education.spoonacular.repository.RecipeRepository;
-import com.education.spoonacular.service.mapper.RecipeToDishDtoMapper;
 import com.education.spoonacular.service.process.api.MenuService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.Tuple;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class MenuServiceImpl implements MenuService {
     private final RecipeRepository recipeRepository;
-    private final RecipeToDishDtoMapper recipeToDishDtoMapper;
+    private final ObjectMapper objectMapper;
 
-    public List<DishDto> getSuggestedDishes(LunchRequestDto request) {
+    public List<RecipeDTO> getSuggestedDishes(LunchRequestDto request) {
 
         int metabolicRate = calculateBasalMetabolicRate(request.getCharacteristicsDto());
         int energyExpenditure = (int) Math.round(calculateEnergyExpenditure(request.getCharacteristicsDto().getActivityLevel(), metabolicRate));
-        Set<String> cuisine = request.getCuisinePreferences();
+        Set<Long> cuisinePreferences = request.getCuisinePreferences();
         Set<String> allergens = request.getIngredientsExclusions();
-        List<Recipe> suggestedRecipesForBreakfast = getSuggestedRecipesForBreakfast(cuisine, energyExpenditure, allergens, MealType.BREAKFAST);
-        return convertRecipeToDishDtos(suggestedRecipesForBreakfast);
+        Long[] cuisineArray = cuisinePreferences.toArray(new Long[0]);
+        List<Tuple> suggestedRecipesForBreakfast = getSuggestedRecipesForBreakfast(cuisineArray, energyExpenditure, allergens, MealType.BREAKFAST);
+        return mapTuplesToRecipeDTO(suggestedRecipesForBreakfast);
+
     }
 
     @Override
@@ -57,17 +61,49 @@ public class MenuServiceImpl implements MenuService {
         return new ArrayList<>(groupedByRecipe.values());
     }
 
-    //TODO: mapstruct
-    public List<DishDto> convertRecipeToDishDtos(List<Recipe> suggestedRecipes) {
-        return suggestedRecipes.stream().map(recipe -> {
-            DishDto dishDto = recipeToDishDtoMapper.mapRecipeToDishDto(recipe);
-            return dishDto;
-        }).collect(Collectors.toList());
+    public List<RecipeDTO> mapTuplesToRecipeDTO(List<Tuple> tuples) {
+        List<RecipeDTO> recipeDTOS = new ArrayList<>();
+
+        for (Tuple tuple : tuples) {
+            Integer recipeId = tuple.get("recipeId", Integer.class);
+            String name = tuple.get("recipeName", String.class);
+            String dishType = tuple.get("dishType", String.class);
+
+            Integer[] cuisineArray = tuple.get("cuisines", Integer[].class);
+            Set<Integer> cuisineName = cuisineArray != null ? new HashSet<>(Arrays.asList(cuisineArray)) : new HashSet<>();
+
+
+            String nutrientJson = tuple.get("nutrient", String.class);
+            List<ViewNutrient> nutrient = null;
+            try {
+                if (nutrientJson != null) {
+                    nutrient = objectMapper.readValue(nutrientJson, new TypeReference<List<ViewNutrient>>() {
+                    });
+                }
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
+
+            String ingredientJson = tuple.get("ingredient", String.class);
+            List<ViewIngredient> ingredient = null;
+            try {
+                if (ingredientJson != null) {
+                    ingredient = objectMapper.readValue(ingredientJson, new TypeReference<List<ViewIngredient>>() {
+                    });
+                }
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
+
+
+            RecipeDTO recipeDTO = new RecipeDTO(recipeId, name, dishType, cuisineName, nutrient, ingredient);
+            recipeDTOS.add(recipeDTO);
+        }
+        return recipeDTOS;
     }
 
-
-    private List<Recipe> getSuggestedRecipesForBreakfast(Set<String> cuisine, int targetCalories, Set<String> allergies,MealType mealType) {
-        return recipeRepository.getSuggestedRecipes(cuisine, targetCalories, allergies, mealType.name());
+    private List<Tuple> getSuggestedRecipesForBreakfast(Long[] cuisines, int targetCalories, Set<String> allergies, MealType mealType) {
+        return recipeRepository.findBasicRecipes(cuisines, targetCalories, mealType.name());
     }
 
     private int calculateBasalMetabolicRate(IndividualCharacteristicsDto characteristics) {

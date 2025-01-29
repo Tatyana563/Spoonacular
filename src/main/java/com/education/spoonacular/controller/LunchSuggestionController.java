@@ -1,6 +1,6 @@
 package com.education.spoonacular.controller;
 
-import com.education.spoonacular.dto.fetch.DishDto;
+import com.education.spoonacular.db_view.RecipeDTO;
 import com.education.spoonacular.dto.menu.LunchRequestDto;
 import com.education.spoonacular.dto.menu.ShoppingListDto;
 import com.education.spoonacular.service.process.api.MenuService;
@@ -21,7 +21,7 @@ public class LunchSuggestionController {
     private final MenuService menuService;
 
     @PostMapping("/suggest-lunch")
-    public List<DishDto> suggestLunch(@RequestBody LunchRequestDto request) {
+    public List<RecipeDTO> suggestLunch(@RequestBody LunchRequestDto request) {
         return menuService.getSuggestedDishes(request);
 
     }
