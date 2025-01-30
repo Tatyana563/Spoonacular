@@ -28,8 +28,9 @@ public class MenuServiceImpl implements MenuService {
         int energyExpenditure = (int) Math.round(calculateEnergyExpenditure(request.getCharacteristicsDto().getActivityLevel(), metabolicRate));
         Set<Long> cuisinePreferences = request.getCuisinePreferences();
         Set<String> allergens = request.getIngredientsExclusions();
+        String[] allergensArray = allergens.toArray(new String[0]);
         Long[] cuisineArray = cuisinePreferences.toArray(new Long[0]);
-        List<Tuple> suggestedRecipesForBreakfast = getSuggestedRecipesForBreakfast(cuisineArray, energyExpenditure, allergens, MealType.BREAKFAST);
+        List<Tuple> suggestedRecipesForBreakfast = getSuggestedRecipesForBreakfast(cuisineArray, energyExpenditure, allergensArray, MealType.BREAKFAST);
         return mapTuplesToRecipeDTO(suggestedRecipesForBreakfast);
 
     }
@@ -102,8 +103,8 @@ public class MenuServiceImpl implements MenuService {
         return recipeDTOS;
     }
 
-    private List<Tuple> getSuggestedRecipesForBreakfast(Long[] cuisines, int targetCalories, Set<String> allergies, MealType mealType) {
-        return recipeRepository.findBasicRecipes(cuisines, targetCalories, mealType.name());
+    private List<Tuple> getSuggestedRecipesForBreakfast(Long[] cuisines, int targetCalories, String[] allergies, MealType mealType) {
+        return recipeRepository.findBasicRecipes(cuisines, targetCalories, allergies, mealType.name());
     }
 
     private int calculateBasalMetabolicRate(IndividualCharacteristicsDto characteristics) {

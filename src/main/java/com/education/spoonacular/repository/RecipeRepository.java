@@ -36,10 +36,19 @@ public interface RecipeRepository extends JpaRepository<Recipe, Integer> {
                 )
                 AND rc.cuisineid = ANY(:cuisines) 
                 AND r.dish_type = :mealType
+           AND NOT EXISTS (
+                  SELECT 1
+                  FROM jsonb_array_elements(r.ingredient) AS ingr
+                  WHERE ingr->>'name' ILIKE ANY (
+                      SELECT '%' || unnest(:allergies) || '%'
+                  )
+              )
                 GROUP BY r.recipe_id, r.recipe_name, r.dish_type, r.nutrient, r.ingredient 
-            """, nativeQuery = true)
+   
+         """, nativeQuery = true)
     List<Tuple> findBasicRecipes(@Param("cuisines") Long[] cuisines,
                                  @Param("targetCalories") double targetCalories,
+                                 @Param("allergies") String[] allergies,
                                  @Param("mealType") String mealType);
 
 
