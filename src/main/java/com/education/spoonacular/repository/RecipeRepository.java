@@ -34,7 +34,7 @@ public interface RecipeRepository extends JpaRepository<Recipe, Integer> {
                     WHERE elem->>'name' = 'Calories'
                       AND CAST(elem->>'amount' AS DOUBLE PRECISION) < :targetCalories
                 )
-                AND rc.cuisineid = ANY(:cuisines) 
+           AND (:cuisinePreferences = '{}' OR rc.cuisineid = ANY(:cuisinePreferences))
                 AND r.dish_type = :mealType
            AND NOT EXISTS (
                   SELECT 1
@@ -46,7 +46,7 @@ public interface RecipeRepository extends JpaRepository<Recipe, Integer> {
                 GROUP BY r.recipe_id, r.recipe_name, r.dish_type, r.nutrient, r.ingredient 
    
          """, nativeQuery = true)
-    List<Tuple> findBasicRecipes(@Param("cuisines") Long[] cuisines,
+    List<Tuple> findBasicRecipes(@Param("cuisinePreferences") Long[] cuisinePreferences,
                                  @Param("targetCalories") double targetCalories,
                                  @Param("allergies") String[] allergies,
                                  @Param("mealType") String mealType);

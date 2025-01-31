@@ -29,7 +29,8 @@ public class MenuServiceImpl implements MenuService {
         Set<Long> cuisinePreferences = request.getCuisinePreferences();
         Set<String> allergens = request.getIngredientsExclusions();
         String[] allergensArray = allergens.toArray(new String[0]);
-        Long[] cuisineArray = cuisinePreferences.toArray(new Long[0]);
+        Long[] cuisineArray = (cuisinePreferences == null || cuisinePreferences.size() == 0) ? new Long[0] : cuisinePreferences.toArray(new Long[0]);
+
         List<Tuple> suggestedRecipesForBreakfast = getSuggestedRecipesForBreakfast(cuisineArray, energyExpenditure, allergensArray, MealType.BREAKFAST);
         return mapTuplesToRecipeDTO(suggestedRecipesForBreakfast);
 
