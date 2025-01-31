@@ -15,12 +15,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class MenuServiceImpl implements MenuService {
     private final RecipeRepository recipeRepository;
     private final ObjectMapper objectMapper;
+    private static final Integer AMOUNT_OF_SUGGESTED_RECIPES = 3;
 
     public List<RecipeDTO> getSuggestedDishes(LunchRequestDto request) {
 
@@ -32,9 +34,9 @@ public class MenuServiceImpl implements MenuService {
         Long[] cuisineArray = (cuisinePreferences == null || cuisinePreferences.size() == 0) ? new Long[0] : cuisinePreferences.toArray(new Long[0]);
         String[] allergiesArray = (allergens == null || allergens.size() == 0) ? new String[0] : allergens.toArray(new String[0]);
 
-        List<Tuple> suggestedRecipesForBreakfast = getSuggestedRecipesForBreakfast(cuisineArray, energyExpenditure, allergiesArray, MealType.BREAKFAST);
-        return mapTuplesToRecipeDTO(suggestedRecipesForBreakfast);
-
+        List<Integer> suggestedRecipesForBreakfast = getSuggestedRecipesIdsForBreakfast(cuisineArray, energyExpenditure, allergiesArray, MealType.BREAKFAST);
+        List<Integer> randomIdsFromList = findRandomIdsFromList(suggestedRecipesForBreakfast);
+        return mapTuplesToRecipeDTO(getSuggestedRecipesForBreakfast(randomIdsFromList));
     }
 
     @Override
@@ -62,6 +64,15 @@ public class MenuServiceImpl implements MenuService {
         }
 
         return new ArrayList<>(groupedByRecipe.values());
+    }
+
+    private List<Integer> findRandomIdsFromList(List<Integer> recipeIds) {
+
+        Collections.shuffle(recipeIds);
+
+        return recipeIds.stream()
+                .limit(AMOUNT_OF_SUGGESTED_RECIPES)
+                .collect(Collectors.toList());
     }
 
     public List<RecipeDTO> mapTuplesToRecipeDTO(List<Tuple> tuples) {
@@ -105,8 +116,12 @@ public class MenuServiceImpl implements MenuService {
         return recipeDTOS;
     }
 
-    private List<Tuple> getSuggestedRecipesForBreakfast(Long[] cuisines, int targetCalories, String[] allergies, MealType mealType) {
-        return recipeRepository.findBasicRecipes(cuisines, targetCalories, allergies, mealType.name());
+    private List<Integer> getSuggestedRecipesIdsForBreakfast(Long[] cuisines, int targetCalories, String[] allergies, MealType mealType) {
+        return recipeRepository.findBasicRecipesIds(cuisines, targetCalories, allergies, mealType.name());
+    }
+
+    private List<Tuple> getSuggestedRecipesForBreakfast(List<Integer> recipeIds) {
+        return recipeRepository.findBasicRecipes(recipeIds);
     }
 
     private int calculateBasalMetabolicRate(IndividualCharacteristicsDto characteristics) {
