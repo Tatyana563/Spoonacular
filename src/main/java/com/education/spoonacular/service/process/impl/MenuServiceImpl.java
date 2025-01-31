@@ -27,11 +27,12 @@ public class MenuServiceImpl implements MenuService {
         int metabolicRate = calculateBasalMetabolicRate(request.getCharacteristicsDto());
         int energyExpenditure = (int) Math.round(calculateEnergyExpenditure(request.getCharacteristicsDto().getActivityLevel(), metabolicRate));
         Set<Long> cuisinePreferences = request.getCuisinePreferences();
-        Set<String> allergens = request.getIngredientsExclusions();
-        String[] allergensArray = allergens.toArray(new String[0]);
-        Long[] cuisineArray = (cuisinePreferences == null || cuisinePreferences.size() == 0) ? new Long[0] : cuisinePreferences.toArray(new Long[0]);
 
-        List<Tuple> suggestedRecipesForBreakfast = getSuggestedRecipesForBreakfast(cuisineArray, energyExpenditure, allergensArray, MealType.BREAKFAST);
+        Set<String> allergens = request.getIngredientsExclusions();
+        Long[] cuisineArray = (cuisinePreferences == null || cuisinePreferences.size() == 0) ? new Long[0] : cuisinePreferences.toArray(new Long[0]);
+        String[] allergiesArray = (allergens == null || allergens.size() == 0) ? new String[0] : allergens.toArray(new String[0]);
+
+        List<Tuple> suggestedRecipesForBreakfast = getSuggestedRecipesForBreakfast(cuisineArray, energyExpenditure, allergiesArray, MealType.BREAKFAST);
         return mapTuplesToRecipeDTO(suggestedRecipesForBreakfast);
 
     }
