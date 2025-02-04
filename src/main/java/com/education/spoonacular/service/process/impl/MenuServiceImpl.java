@@ -83,8 +83,8 @@ public class MenuServiceImpl implements MenuService {
             String name = tuple.get("recipeName", String.class);
             String dishType = tuple.get("dishType", String.class);
 
-            Integer[] cuisineArray = tuple.get("cuisines", Integer[].class);
-            Set<Integer> cuisineName = cuisineArray != null ? new HashSet<>(Arrays.asList(cuisineArray)) : new HashSet<>();
+            String[] cuisineArray = tuple.get("cuisines", String[].class);
+            Set<String> cuisineName = cuisineArray != null ? new HashSet<>(Arrays.asList(cuisineArray)) : new HashSet<>();
 
 
             String nutrientJson = tuple.get("nutrient", String.class);
