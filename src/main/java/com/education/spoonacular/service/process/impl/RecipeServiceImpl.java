@@ -6,6 +6,7 @@ import com.education.spoonacular.dto.fetch.RecipeNutrientDto;
 import com.education.spoonacular.entity.*;
 import com.education.spoonacular.repository.IngredientRepository;
 import com.education.spoonacular.repository.NutrientRepository;
+import com.education.spoonacular.repository.RecipeNutrientRepository;
 import com.education.spoonacular.repository.RecipeRepository;
 import com.education.spoonacular.service.process.api.CuisineService;
 import com.education.spoonacular.service.process.api.RecipeService;
@@ -23,6 +24,7 @@ public class RecipeServiceImpl extends AbstractGeneralService<Recipe, RecipeDto>
     private final IngredientRepository ingredientRepository;
     private final CuisineService cuisineService;
 
+    private final RecipeNutrientRepository recipeNutrientRepository;
 
     @Override
     protected String getUniqueIdentifier(RecipeDto dto) {
@@ -97,6 +99,7 @@ public class RecipeServiceImpl extends AbstractGeneralService<Recipe, RecipeDto>
             recipeNutrients.add(recipeNutrient);
         }
 
+
         for (Ingredient ingredient : ingredientRepositoryByName) {
 
             RecipeIngredient recipeIngredient = new RecipeIngredient();
@@ -106,7 +109,7 @@ public class RecipeServiceImpl extends AbstractGeneralService<Recipe, RecipeDto>
             recipeIngredients.add(recipeIngredient);
         }
 
-        recipeEntity.setRecipeNutrients(recipeNutrients);
+        //recipeEntity.setRecipeNutrients(recipeNutrients);
         recipeEntity.setRecipeIngredients(recipeIngredients);
         return recipeEntity;
     }

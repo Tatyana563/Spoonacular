@@ -17,9 +17,11 @@ public class MainServiceImpl implements MainService {
     private final RecipeService recipeService;
     private final IngredientService ingredientService;
 
+    private final RecipeNutrientService recipeNutrientService;
+
     public void processResponse(List<RecipeDto> recipeDtos) {
         List<RecipeDto> filteredRecipeDtos = filterRecipiesWithFaultIngredients(recipeDtos);
-        List.of(cuisineService, nutrientService, ingredientService,recipeService)
+        List.of(cuisineService, nutrientService, ingredientService,recipeService,recipeNutrientService)
                 .forEach(generalService -> generalService.collectAndSaveNewEntities(filteredRecipeDtos));
     }
 

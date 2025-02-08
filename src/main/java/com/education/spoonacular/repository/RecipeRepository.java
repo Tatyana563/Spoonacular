@@ -12,28 +12,36 @@ import java.util.Set;
 
 @Repository
 public interface RecipeRepository extends JpaRepository<Recipe, Integer> {
-
+    Recipe findByUrl(String url);
     @Query("SELECT r FROM Recipe r LEFT JOIN FETCH r.cuisines WHERE r.url IN :urls")
     List<Recipe> findExistingInDB(@Param("urls") Set<String> urls);
 
     @Query("SELECT r.url FROM Recipe r WHERE r.url IN :urls")
     List<String> findExistingRecipeNames(@Param("urls") Set<String> urls);
 
-    @Query(value = """
-                SELECT r.recipe_id AS recipeId,
-                       r.recipe_name AS recipeName,
-                       r.dish_type AS dishType,
-                       array_agg(DISTINCT c.name) AS cuisines, 
-                       r.nutrient AS nutrient,
-                       r.ingredient AS ingredient
-                   
-                FROM recipe_nutrient_view r
-                     JOIN recipe_cuisine rc ON r.recipe_id = rc.recipeid
-                     JOIN cuisine c on c.id = rc.cuisineid  
-                WHERE r.recipe_id IN (:recipeIds)
-                  GROUP BY r.recipe_id, r.recipe_name,r.dish_type, r.nutrient,r.ingredient
-               
-""", nativeQuery = true)
+    @Query("""
+    SELECT r.id AS recipeId, 
+           r.name AS recipeName, 
+           r.dishType AS dishType, 
+           STRING_AGG(c.name, ', ') AS cuisines,
+   i.name AS ingredientName,
+   i.unit AS ingredientUnit,
+   ri.amount AS ingredientAmount,
+   
+   n.name AS nutrientName,
+   n.unit AS nutrientUnit,
+   rn.amount AS nutrientAmount
+   
+    FROM Recipe r 
+    LEFT JOIN r.cuisines c 
+    LEFT JOIN r.recipeIngredients ri
+    LEFT JOIN ri.ingredient i 
+    LEFT JOIN r.recipeNutrients rn
+    LEFT JOIN rn.nutrient n 
+    WHERE r.id IN :recipeIds
+    AND n.name IN ('Carbohydrates', 'Protein', 'Fat', 'Calories')
+    GROUP BY r.id, r.name, r.dishType, i.name, i.unit, ri.amount,n.name,n.unit,rn.amount
+""")
     List<Tuple> findBasicRecipes(@Param("recipeIds") List<Integer> recipeIds);
 
     @Query(value = """

@@ -1,5 +1,7 @@
 package com.education.spoonacular.db_view;
 
+import com.education.spoonacular.dto.fetch.IngredientAmountDto;
+import com.education.spoonacular.dto.fetch.NutrientAmountDto;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -17,8 +19,8 @@ public class RecipeDTO {
     private String recipeName;
     private String dishType;
     private Set<String> cuisineName;
-    private List<ViewNutrient> nutrient;
-    private List<ViewIngredient> ingredient;
+    Set<IngredientAmountDto> ingredients;
+    Set<NutrientAmountDto> nutrients;
 
 }
 

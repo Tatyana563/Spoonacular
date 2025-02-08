@@ -1,14 +1,12 @@
 package com.education.spoonacular.service.process.impl;
 
 import com.education.spoonacular.db_view.RecipeDTO;
-import com.education.spoonacular.db_view.ViewIngredient;
-import com.education.spoonacular.db_view.ViewNutrient;
+import com.education.spoonacular.dto.fetch.IngredientAmountDto;
+import com.education.spoonacular.dto.fetch.NutrientAmountDto;
 import com.education.spoonacular.dto.fetch.RecipeNutrientDto;
 import com.education.spoonacular.dto.menu.*;
 import com.education.spoonacular.repository.RecipeRepository;
 import com.education.spoonacular.service.process.api.MenuService;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.Tuple;
 import lombok.RequiredArgsConstructor;
@@ -35,8 +33,11 @@ public class MenuServiceImpl implements MenuService {
         String[] allergiesArray = (allergens == null || allergens.size() == 0) ? new String[0] : allergens.toArray(new String[0]);
 
         List<Integer> suggestedRecipesForBreakfast = getSuggestedRecipesIdsForBreakfast(cuisineArray, energyExpenditure, allergiesArray, MealType.BREAKFAST);
-        List<Integer> randomIdsFromList = findRandomIdsFromList(suggestedRecipesForBreakfast);
-        return mapTuplesToRecipeDTO(getSuggestedRecipesForBreakfast(randomIdsFromList));
+        if (suggestedRecipesForBreakfast.size() != 0) {
+            List<Integer> randomIdsFromList = findRandomIdsFromList(suggestedRecipesForBreakfast);
+            return mapTuplesToRecipeDTO(getSuggestedRecipesForBreakfast(randomIdsFromList));
+        } else throw new NoSuchElementException("No recipes found matching your request");
+
     }
 
     @Override
@@ -76,44 +77,60 @@ public class MenuServiceImpl implements MenuService {
     }
 
     public List<RecipeDTO> mapTuplesToRecipeDTO(List<Tuple> tuples) {
-        List<RecipeDTO> recipeDTOS = new ArrayList<>();
+        Map<Integer, RecipeDTO> map = new HashMap<>();
+
 
         for (Tuple tuple : tuples) {
+            RecipeDTO recipeDTO = null;
             Integer recipeId = tuple.get("recipeId", Integer.class);
-            String name = tuple.get("recipeName", String.class);
-            String dishType = tuple.get("dishType", String.class);
 
-            String[] cuisineArray = tuple.get("cuisines", String[].class);
-            Set<String> cuisineName = cuisineArray != null ? new HashSet<>(Arrays.asList(cuisineArray)) : new HashSet<>();
+            if (map.get(recipeId) == null) {
+                String name = tuple.get("recipeName", String.class);
+                String dishType = tuple.get("dishType", String.class);
 
+                String cuisines = tuple.get("cuisines", String.class);
+                String[] cuisineArray = Arrays.stream(cuisines.split(","))
+                        .map(String::trim)
+                        .toArray(String[]::new);
+                Set<String> cuisineName = new HashSet<>(Arrays.asList(cuisineArray));
+                String ingredientName = tuple.get("ingredientName", String.class);
+                Double ingredientAmount = tuple.get("ingredientAmount", Double.class);
+                String ingredientUnit = tuple.get("ingredientUnit", String.class);
 
-            String nutrientJson = tuple.get("nutrient", String.class);
-            List<ViewNutrient> nutrient = null;
-            try {
-                if (nutrientJson != null) {
-                    nutrient = objectMapper.readValue(nutrientJson, new TypeReference<List<ViewNutrient>>() {
-                    });
+                String nutrientName = tuple.get("nutrientName", String.class);
+                Double nutrientAmount = tuple.get("nutrientAmount", Double.class);
+                String nutrientUnit = tuple.get("nutrientUnit", String.class);
+
+                recipeDTO = map.computeIfAbsent(recipeId, id ->
+                        new RecipeDTO(recipeId, name, dishType, cuisineName, new HashSet<>(), new HashSet<>()));
+
+                if (ingredientName != null) {
+                    recipeDTO.getIngredients().add(new IngredientAmountDto(ingredientName, ingredientAmount, ingredientUnit));
                 }
-            } catch (JsonProcessingException e) {
-                e.printStackTrace();
-            }
 
-            String ingredientJson = tuple.get("ingredient", String.class);
-            List<ViewIngredient> ingredient = null;
-            try {
-                if (ingredientJson != null) {
-                    ingredient = objectMapper.readValue(ingredientJson, new TypeReference<List<ViewIngredient>>() {
-                    });
+                if (nutrientName != null) {
+                    recipeDTO.getNutrients().add(new NutrientAmountDto(nutrientName, nutrientAmount, nutrientUnit));
                 }
-            } catch (JsonProcessingException e) {
-                e.printStackTrace();
+            } else {
+                recipeDTO = map.get(recipeId);
+                String ingredientName = tuple.get("ingredientName", String.class);
+                Double ingredientAmount = tuple.get("ingredientAmount", Double.class);
+                String unit = tuple.get("ingredientUnit", String.class);
+                if (ingredientName != null) {
+                    recipeDTO.getIngredients().add(new IngredientAmountDto(ingredientName, ingredientAmount, unit));
+                }
+
+                String nutrientName = tuple.get("nutrientName", String.class);
+                Double nutrientAmount = tuple.get("nutrientAmount", Double.class);
+                String nutrientUnit = tuple.get("nutrientUnit", String.class);
+
+                if (nutrientName != null) {
+                    recipeDTO.getNutrients().add(new NutrientAmountDto(nutrientName, nutrientAmount, nutrientUnit));
+                }
             }
-
-
-            RecipeDTO recipeDTO = new RecipeDTO(recipeId, name, dishType, cuisineName, nutrient, ingredient);
-            recipeDTOS.add(recipeDTO);
         }
-        return recipeDTOS;
+
+        return new ArrayList<>(map.values());
     }
 
     private List<Integer> getSuggestedRecipesIdsForBreakfast(Long[] cuisines, int targetCalories, String[] allergies, MealType mealType) {

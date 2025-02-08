@@ -5,7 +5,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
-import java.util.Set;
 
 @Data
 @Entity
@@ -27,24 +26,19 @@ public class Recipe extends BaseEntity {
 
     @ElementCollection
     @CollectionTable(
-            name = "recipe_nutrient",
-            joinColumns = @JoinColumn(name = "recipeid")
-    )
-    private List<RecipeNutrient> recipeNutrients;
-
-    @ElementCollection
-    @CollectionTable(
             name = "recipe_ingredient",
             joinColumns = @JoinColumn(name = "recipeid")
     )
     private List<RecipeIngredient> recipeIngredients;
 
-   // @OneToMany(fetch = FetchType.EAGER)
     @OneToMany(fetch = FetchType.EAGER)
     @JoinTable(
-            name="recipe_cuisine",
-            joinColumns = @JoinColumn( name="recipeid"),
-            inverseJoinColumns = @JoinColumn( name="cuisineid")
+            name = "recipe_cuisine",
+            joinColumns = @JoinColumn(name = "recipeid"),
+            inverseJoinColumns = @JoinColumn(name = "cuisineid")
     )
     public List<Cuisine> cuisines;
+
+    @OneToMany(mappedBy = "recipe",fetch = FetchType.EAGER)
+    public List<RecipeNutrient> recipeNutrients;
 }

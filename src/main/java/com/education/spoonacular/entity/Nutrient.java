@@ -5,6 +5,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.hibernate.annotations.Filter;
+
+import java.util.List;
 
 @Data
 @Entity
@@ -12,6 +15,6 @@ import lombok.ToString;
 @Table(name = "nutrient")
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-public class Nutrient extends  ComponentBaseEntity {
+public class Nutrient extends ComponentBaseEntity {
 
 }

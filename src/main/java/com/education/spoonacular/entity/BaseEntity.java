@@ -12,7 +12,7 @@ import java.io.Serializable;
 public abstract class BaseEntity  implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Integer id;
 
 }
 

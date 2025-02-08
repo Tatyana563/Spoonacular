@@ -5,12 +5,20 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@Embeddable
+@Entity
 @NoArgsConstructor
-public class RecipeNutrient  {
+public class RecipeNutrient   {
+    @EmbeddedId
+    private RecipeNutrientId id;
 
     @ManyToOne
-    @JoinColumn(name = "nutrientid")
+    @MapsId("recipeIdCompound")
+    @JoinColumn(name = "recipeid", insertable = false, updatable = false)
+    private Recipe recipe;
+
+    @ManyToOne
+    @MapsId("nutrientIdCompound")
+    @JoinColumn(name = "nutrientid", insertable = false, updatable = false)
     private Nutrient nutrient;
 
     @Column(name = "amount", nullable = false)
