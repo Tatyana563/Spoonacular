@@ -24,3 +24,30 @@ You can save these plans in the database and allow users to retrieve them later.
  Article used for calculation:
  https://www.nasm.org/resources/calorie-calculator#:~:text=You%20can%20calculate%20it%20using,%C3%97%20age%20in%20years)%20%2D%20161
 
+ SELECT r.id
+ FROM Recipe r
+ --          JOIN recipe_nutrient rn ON r.id = rn.recipeid
+ --          JOIN nutrient n ON rn.nutrientid = n.id
+ --          JOIN recipe_ingredient ri ON r.id = ri.recipeid
+ --          JOIN ingredient i ON ri.ingredientid = i.id
+ --TODO: use for this subquery EXISTS as below
+ WHERE r.id IN (SELECT rn.recipeid FROM recipe_nutrient rn
+                                JOIN nutrient n ON rn.nutrientid = n.id
+                       WHERE  n.name = 'Calories' AND rn.amount < :targetCalories)
+
+
+   AND (:cuisinePreferences = '{}' OR EXISTS (
+         SELECT 1 FROM recipe_cuisine rc WHERE rc.recipeid = r.id AND rc.cuisineid = ANY(:cuisinePreferences)
+     ))
+   AND r.dish_type = :mealType
+   AND NOT EXISTS (
+         SELECT 1 FROM recipe_ingredient ri
+                  JOIN ingredient i on ri.ingredientid = i.id
+         WHERE ri.recipeid = r.id
+           AND EXISTS (
+                 SELECT 1 FROM unnest(:allergies) AS allergy
+                 WHERE i.name ILIKE '%' || allergy || '%'
+             )
+     )
+ -- GROUP BY r.id
+

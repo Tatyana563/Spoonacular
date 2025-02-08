@@ -31,6 +31,7 @@ public class MenuServiceImpl implements MenuService {
         Set<Long> cuisinePreferences = request.getCuisinePreferences();
 
         Set<String> allergens = request.getIngredientsExclusions();
+        //TODO: use Lists
         Long[] cuisineArray = (cuisinePreferences == null || cuisinePreferences.size() == 0) ? new Long[0] : cuisinePreferences.toArray(new Long[0]);
         String[] allergiesArray = (allergens == null || allergens.size() == 0) ? new String[0] : allergens.toArray(new String[0]);
 

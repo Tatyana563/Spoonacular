@@ -35,7 +35,7 @@ public interface RecipeRepository extends JpaRepository<Recipe, Integer> {
                
 """, nativeQuery = true)
     List<Tuple> findBasicRecipes(@Param("recipeIds") List<Integer> recipeIds);
-
+// TODO: HQL
     @Query(value = """
     SELECT r.id AS recipeId
     FROM Recipe r

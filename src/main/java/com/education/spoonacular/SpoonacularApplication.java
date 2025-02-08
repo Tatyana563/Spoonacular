@@ -7,7 +7,7 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 
 @SpringBootApplication
 @EnableAspectJAutoProxy
-@EnableConfigurationProperties
+//@EnableConfigurationProperties
 public class SpoonacularApplication {
     public static void main(String[] args) {
         SpringApplication.run(SpoonacularApplication.class, args);
