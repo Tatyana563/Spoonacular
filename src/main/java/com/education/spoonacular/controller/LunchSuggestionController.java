@@ -3,6 +3,8 @@ package com.education.spoonacular.controller;
 import com.education.spoonacular.db_view.RecipeDTO;
 import com.education.spoonacular.dto.menu.LunchRequestDto;
 import com.education.spoonacular.dto.menu.ShoppingListDto;
+import com.education.spoonacular.job.Timed;
+import com.education.spoonacular.service.PerformanceService;
 import com.education.spoonacular.service.process.api.MenuService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,11 +19,13 @@ import java.util.Set;
 @RequestMapping("/api")
 @RequiredArgsConstructor
 public class LunchSuggestionController {
-
+    private final PerformanceService performanceService;
     private final MenuService menuService;
 
     @PostMapping("/suggest-lunch")
     public List<RecipeDTO> suggestLunch(@RequestBody LunchRequestDto request) {
+        performanceService.testPerformance(request, menuService);
+
         return menuService.getSuggestedDishes(request);
 
     }
@@ -31,4 +35,5 @@ public class LunchSuggestionController {
         return menuService.getShoppingList(dishIds);
 
     }
+
 }
