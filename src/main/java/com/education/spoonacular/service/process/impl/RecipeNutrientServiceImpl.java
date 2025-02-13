@@ -12,10 +12,11 @@ import com.education.spoonacular.repository.RecipeNutrientRepository;
 import com.education.spoonacular.repository.RecipeRepository;
 import com.education.spoonacular.service.process.api.RecipeNutrientService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RecipeNutrientServiceImpl extends AbstractGeneralService<RecipeNutrient, RecipeNutrientFetchDto> implements RecipeNutrientService {
@@ -43,7 +44,7 @@ public class RecipeNutrientServiceImpl extends AbstractGeneralService<RecipeNutr
     @Override
     protected List<RecipeNutrientFetchDto> extractDtos(RecipeDto recipeDto) {
         List<String> nutrientNames = new ArrayList<>();
-        nutrientsMap.get().clear();
+       // nutrientsMap.get().clear();
         List<RecipeNutrientFetchDto> recipeNutrientFetchDtos = new ArrayList<>();
         String url = recipeDto.getUrl();
         recipeDto.getNutritionDto().getRecipeNutrientDtoList().forEach(recipeNutrientDto -> {
@@ -77,6 +78,7 @@ public class RecipeNutrientServiceImpl extends AbstractGeneralService<RecipeNutr
         Nutrient nutrient = nutrientsMap.get().get(dto.getNutrientName());
         recipeNutrient.setNutrient(nutrient);
         recipeNutrient.setAmount(dto.getAmount());
+
         recipeNutrient.setId(new RecipeNutrientId(recipe.getId(), nutrient.getId()));
         return recipeNutrient;
     }
