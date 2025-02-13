@@ -57,7 +57,6 @@ public class RecipeServiceImpl extends AbstractGeneralService<Recipe, RecipeDto>
         }
         recipeEntity.setCuisines(savedCuisines);
 
-        List<RecipeNutrient> recipeNutrients = new ArrayList<>();
         List<RecipeIngredient> recipeIngredients = new ArrayList<>();
 
         List<String> nutrientDtoNames = dto.getNutritionDto().getRecipeNutrientDtoList().stream().distinct().map(RecipeNutrientDto::getName).collect(Collectors.toList());
@@ -75,10 +74,6 @@ public class RecipeServiceImpl extends AbstractGeneralService<Recipe, RecipeDto>
             throw new IllegalStateException(String.format("Ingredients amount from DB is not equivalent the required for recipe with name '%s' and url: '%s'",
                     dto.getName(), dto.getUrl()));
         }
-        Map<String, RecipeNutrientDto> recipeNutrientDtoMap = dto.getNutritionDto().getRecipeNutrientDtoList().stream().collect(Collectors.toMap(
-                RecipeNutrientDto::getName,
-                recipeNutrientDto -> recipeNutrientDto
-        ));
 
         Map<String, RecipeIngredientDto> recipeIngredientDtoMap = dto.getNutritionDto().getRecipeIngredientDto().stream().collect(Collectors.toMap(
                 RecipeIngredientDto::getName,
@@ -89,17 +84,6 @@ public class RecipeServiceImpl extends AbstractGeneralService<Recipe, RecipeDto>
                 }
         ));
 
-
-        for (Nutrient nutrient : nutrientRepositoryByName) {
-
-            RecipeNutrient recipeNutrient = new RecipeNutrient();
-            recipeNutrient.setNutrient(nutrient);
-
-            recipeNutrient.setAmount(recipeNutrientDtoMap.get(nutrient.getName()).getAmount());
-            recipeNutrients.add(recipeNutrient);
-        }
-
-
         for (Ingredient ingredient : ingredientRepositoryByName) {
 
             RecipeIngredient recipeIngredient = new RecipeIngredient();
@@ -109,7 +93,6 @@ public class RecipeServiceImpl extends AbstractGeneralService<Recipe, RecipeDto>
             recipeIngredients.add(recipeIngredient);
         }
 
-        //recipeEntity.setRecipeNutrients(recipeNutrients);
         recipeEntity.setRecipeIngredients(recipeIngredients);
         return recipeEntity;
     }

@@ -20,29 +20,9 @@ public interface RecipeRepository extends JpaRepository<Recipe, Integer> {
     List<String> findExistingRecipeNames(@Param("urls") Set<String> urls);
 
     @Query("""
-    SELECT r.id AS recipeId, 
-           r.name AS recipeName, 
-           r.dishType AS dishType, 
-           STRING_AGG(c.name, ', ') AS cuisines,
-   i.name AS ingredientName,
-   i.unit AS ingredientUnit,
-   ri.amount AS ingredientAmount,
-   
-   n.name AS nutrientName,
-   n.unit AS nutrientUnit,
-   rn.amount AS nutrientAmount
-   
-    FROM Recipe r 
-    LEFT JOIN r.cuisines c 
-    LEFT JOIN r.recipeIngredients ri
-    LEFT JOIN ri.ingredient i 
-    LEFT JOIN r.recipeNutrients rn
-    LEFT JOIN rn.nutrient n 
-    WHERE r.id IN :recipeIds
-    AND n.name IN ('Carbohydrates', 'Protein', 'Fat', 'Calories')
-    GROUP BY r.id, r.name, r.dishType, i.name, i.unit, ri.amount,n.name,n.unit,rn.amount
+    SELECT r FROM Recipe r where r.id IN (:recipeIds)
 """)
-    List<Tuple> findBasicRecipes(@Param("recipeIds") List<Integer> recipeIds);
+    List<Recipe> findRecipesByIds(@Param("recipeIds") List<Integer> recipeIds);
 
     @Query(value = """
     SELECT r.id AS recipeId
@@ -73,7 +53,7 @@ public interface RecipeRepository extends JpaRepository<Recipe, Integer> {
             @Param("allergies") String[] allergies,
             @Param("mealType") String mealType
     );
-
+//TODO: use Specification; Repo extends JpaSpecificationExecutor<Recipe>, see Hotel try to use projection to get only id not Entity from DB
 
 
     //https://thorben-janssen.com/spring-data-jpa-query-projections/

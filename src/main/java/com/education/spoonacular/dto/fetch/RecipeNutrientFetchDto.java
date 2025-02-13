@@ -14,6 +14,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RecipeNutrientFetchDto implements Serializable {
+   // TODO: redipeId instead of recipeUrl
     private String recipeUrl;
     private String nutrientName;
     private Double amount;

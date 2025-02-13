@@ -3,6 +3,7 @@ package com.education.spoonacular.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.util.List;
 
@@ -39,6 +40,11 @@ public class Recipe extends BaseEntity {
     )
     public List<Cuisine> cuisines;
 
-    @OneToMany(mappedBy = "recipe",fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "recipe",fetch = FetchType.LAZY)
+    @ToString.Exclude
     public List<RecipeNutrient> recipeNutrients;
+
+    @OneToMany(mappedBy = "recipe", fetch = FetchType.EAGER)
+    @ToString.Exclude
+    public List<BasicRecipeNutrient> basicRecipeNutrients;
 }

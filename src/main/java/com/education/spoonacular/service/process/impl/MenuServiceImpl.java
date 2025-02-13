@@ -5,9 +5,10 @@ import com.education.spoonacular.dto.fetch.IngredientAmountDto;
 import com.education.spoonacular.dto.fetch.NutrientAmountDto;
 import com.education.spoonacular.dto.fetch.RecipeNutrientDto;
 import com.education.spoonacular.dto.menu.*;
+import com.education.spoonacular.entity.Recipe;
 import com.education.spoonacular.repository.RecipeRepository;
+import com.education.spoonacular.service.mapper.RecipeToRecipeDTOMapper;
 import com.education.spoonacular.service.process.api.MenuService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.Tuple;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class MenuServiceImpl implements MenuService {
     private final RecipeRepository recipeRepository;
-    private final ObjectMapper objectMapper;
+    private final RecipeToRecipeDTOMapper recipeToRecipeDTOMapper;
     private static final Integer AMOUNT_OF_SUGGESTED_RECIPES = 3;
 
     public List<RecipeDTO> getSuggestedDishes(LunchRequestDto request) {
@@ -33,10 +34,12 @@ public class MenuServiceImpl implements MenuService {
         String[] allergiesArray = (allergens == null || allergens.size() == 0) ? new String[0] : allergens.toArray(new String[0]);
 
         List<Integer> suggestedRecipesForBreakfast = getSuggestedRecipesIdsForBreakfast(cuisineArray, energyExpenditure, allergiesArray, MealType.BREAKFAST);
-        if (suggestedRecipesForBreakfast.size() != 0) {
-            List<Integer> randomIdsFromList = findRandomIdsFromList(suggestedRecipesForBreakfast);
-            return mapTuplesToRecipeDTO(getSuggestedRecipesForBreakfast(randomIdsFromList));
-        } else throw new NoSuchElementException("No recipes found matching your request");
+
+        List<Integer> randomIdsFromList = findRandomIdsFromList(suggestedRecipesForBreakfast);
+        //TODO: use mapstruct to map  List<Recipe> recipesByIds  into List<RecipeDTO> (use basicRecipeNutrients)
+
+        List<Recipe> recipesByIds = recipeRepository.findRecipesByIds(randomIdsFromList);
+        return recipeToRecipeDTOMapper.mapRecipeToRecipeDTO(recipesByIds);
 
     }
 
@@ -68,7 +71,7 @@ public class MenuServiceImpl implements MenuService {
     }
 
     private List<Integer> findRandomIdsFromList(List<Integer> recipeIds) {
-
+//TODO: check if List is empty
         Collections.shuffle(recipeIds);
 
         return recipeIds.stream()
@@ -76,69 +79,8 @@ public class MenuServiceImpl implements MenuService {
                 .collect(Collectors.toList());
     }
 
-    public List<RecipeDTO> mapTuplesToRecipeDTO(List<Tuple> tuples) {
-        Map<Integer, RecipeDTO> map = new HashMap<>();
-
-
-        for (Tuple tuple : tuples) {
-            RecipeDTO recipeDTO = null;
-            Integer recipeId = tuple.get("recipeId", Integer.class);
-
-            if (map.get(recipeId) == null) {
-                String name = tuple.get("recipeName", String.class);
-                String dishType = tuple.get("dishType", String.class);
-
-                String cuisines = tuple.get("cuisines", String.class);
-                String[] cuisineArray = Arrays.stream(cuisines.split(","))
-                        .map(String::trim)
-                        .toArray(String[]::new);
-                Set<String> cuisineName = new HashSet<>(Arrays.asList(cuisineArray));
-                String ingredientName = tuple.get("ingredientName", String.class);
-                Double ingredientAmount = tuple.get("ingredientAmount", Double.class);
-                String ingredientUnit = tuple.get("ingredientUnit", String.class);
-
-                String nutrientName = tuple.get("nutrientName", String.class);
-                Double nutrientAmount = tuple.get("nutrientAmount", Double.class);
-                String nutrientUnit = tuple.get("nutrientUnit", String.class);
-
-                recipeDTO = map.computeIfAbsent(recipeId, id ->
-                        new RecipeDTO(recipeId, name, dishType, cuisineName, new HashSet<>(), new HashSet<>()));
-
-                if (ingredientName != null) {
-                    recipeDTO.getIngredients().add(new IngredientAmountDto(ingredientName, ingredientAmount, ingredientUnit));
-                }
-
-                if (nutrientName != null) {
-                    recipeDTO.getNutrients().add(new NutrientAmountDto(nutrientName, nutrientAmount, nutrientUnit));
-                }
-            } else {
-                recipeDTO = map.get(recipeId);
-                String ingredientName = tuple.get("ingredientName", String.class);
-                Double ingredientAmount = tuple.get("ingredientAmount", Double.class);
-                String unit = tuple.get("ingredientUnit", String.class);
-                if (ingredientName != null) {
-                    recipeDTO.getIngredients().add(new IngredientAmountDto(ingredientName, ingredientAmount, unit));
-                }
-
-                String nutrientName = tuple.get("nutrientName", String.class);
-                Double nutrientAmount = tuple.get("nutrientAmount", Double.class);
-                String nutrientUnit = tuple.get("nutrientUnit", String.class);
-
-                if (nutrientName != null) {
-                    recipeDTO.getNutrients().add(new NutrientAmountDto(nutrientName, nutrientAmount, nutrientUnit));
-                }
-            }
-        }
-
-        return new ArrayList<>(map.values());
-    }
-
     private List<Integer> getSuggestedRecipesIdsForBreakfast(Long[] cuisines, int targetCalories, String[] allergies, MealType mealType) {
         return recipeRepository.findBasicRecipesIds(cuisines, targetCalories, allergies, mealType.name());
-    }
-
-    private List<Tuple> getSuggestedRecipesForBreakfast(List<Integer> recipeIds) {
-        return recipeRepository.findBasicRecipes(recipeIds);
     }
 
     private int calculateBasalMetabolicRate(IndividualCharacteristicsDto characteristics) {

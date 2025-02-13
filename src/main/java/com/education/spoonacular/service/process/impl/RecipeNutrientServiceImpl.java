@@ -14,13 +14,13 @@ import com.education.spoonacular.service.process.api.RecipeNutrientService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class RecipeNutrientServiceImpl extends AbstractGeneralService<RecipeNutrient, RecipeNutrientFetchDto> implements RecipeNutrientService {
+    //TODO: use ThreadLocal
+    private final ThreadLocal<Map<String, Nutrient>> nutrientsMap = ThreadLocal.withInitial(HashMap::new);
     private final RecipeNutrientRepository recipeNutrientRepository;
     private final RecipeRepository recipeRepository;
     private final NutrientRepository nutrientRepository;
@@ -42,15 +42,26 @@ public class RecipeNutrientServiceImpl extends AbstractGeneralService<RecipeNutr
 
     @Override
     protected List<RecipeNutrientFetchDto> extractDtos(RecipeDto recipeDto) {
+        List<String> nutrientNames = new ArrayList<>();
+        nutrientsMap.get().clear();
         List<RecipeNutrientFetchDto> recipeNutrientFetchDtos = new ArrayList<>();
         String url = recipeDto.getUrl();
         recipeDto.getNutritionDto().getRecipeNutrientDtoList().forEach(recipeNutrientDto -> {
-
+            nutrientNames.add(recipeNutrientDto.getName());
             RecipeNutrientFetchDto dto = new RecipeNutrientFetchDto();
             dto.setNutrientName(recipeNutrientDto.getName());
             dto.setAmount(recipeNutrientDto.getAmount());
             dto.setRecipeUrl(url);
             recipeNutrientFetchDtos.add(dto);
+
+            // TODO:
+            // collect all NutrientNames
+            // get List<Nutrients> from db by NutrientNames
+            // Map<NutrientName, Nutrient>
+        });
+        List<Nutrient> nutrientsByNames = nutrientRepository.findByNames(nutrientNames);
+        nutrientsByNames.stream().forEach(nutrient -> {
+            nutrientsMap.get().put(nutrient.getName(),nutrient);
         });
         return recipeNutrientFetchDtos;
     }
@@ -58,9 +69,12 @@ public class RecipeNutrientServiceImpl extends AbstractGeneralService<RecipeNutr
     @Override
     protected RecipeNutrient createEntity(RecipeNutrientFetchDto dto) {
         RecipeNutrient recipeNutrient = new RecipeNutrient();
+        //TODO: look for by id not url
         Recipe recipe = recipeRepository.findByUrl(dto.getRecipeUrl());
         recipeNutrient.setRecipe(recipe);
-        Nutrient nutrient = nutrientRepository.findByName(dto.getNutrientName());
+        //TODO: use map nutrients instead of ( Nutrient nutrient = nutrientRepository.findByName(dto.getNutrientName());)
+      //  Nutrient nutrient = nutrientRepository.findByName(dto.getNutrientName());
+        Nutrient nutrient = nutrientsMap.get().get(dto.getNutrientName());
         recipeNutrient.setNutrient(nutrient);
         recipeNutrient.setAmount(dto.getAmount());
         recipeNutrient.setId(new RecipeNutrientId(recipe.getId(), nutrient.getId()));
