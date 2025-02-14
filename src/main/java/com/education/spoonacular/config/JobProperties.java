@@ -7,7 +7,7 @@ import lombok.Setter;
 @Setter
 public class JobProperties {
     private int amount;
-    //TODO: not an optional property, filter all recipes
+
     private boolean filterNotFullRecipes = false;
 
 }

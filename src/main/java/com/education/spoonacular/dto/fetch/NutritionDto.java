@@ -19,4 +19,3 @@ public class NutritionDto implements Serializable {
     @JsonProperty("ingredients")
     private List<RecipeIngredientDto> recipeIngredientDto;
 }
-//TODO: divide into packages inner and outer dtos

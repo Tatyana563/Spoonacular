@@ -3,6 +3,7 @@ package com.education.spoonacular.job;
 import com.education.spoonacular.config.JobConfig;
 import com.education.spoonacular.config.JobProperties;
 import com.education.spoonacular.dto.fetch.RecipeDto;
+import com.education.spoonacular.dto.fetch.RecipeNutrientDto;
 import com.education.spoonacular.dto.fetch.ResponseDto;
 import com.education.spoonacular.dto.menu.MealType;
 import com.education.spoonacular.service.process.api.MainService;
@@ -28,7 +29,7 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class StartupJob implements ApplicationRunner {
     private static final List<String> BREAKFAST_DISHES = Arrays.asList("pancakes");
-    private static final List<String> LUNCH_DISHES = Arrays.asList("soup","pasta");
+    private static final List<String> LUNCH_DISHES = Arrays.asList("soup", "pasta");
     private static final List<String> DINNER_DISHES = Arrays.asList("salad");
 
     public static final Map<String, List<String>> MEAL_DISH;
@@ -86,24 +87,43 @@ public class StartupJob implements ApplicationRunner {
     /* filter incomplete recipes and remove duplicates*/
     private Stream<RecipeDto> filterRecipes(List<RecipeDto> recipeDtos) {
         return recipeDtos.stream()
-                .filter(recipeDto -> !recipeDto.getUrl().isEmpty())
-                .filter(distinctByKey(RecipeDto::getUrl));
+                .filter(filterRecipesWithEmptyUrls())
+                .filter(filterDuplicateRecipes(RecipeDto::getUrl))
+                .filter(this::hasCompleteNutrients);
 
     }
 
-    public <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
+    private Predicate<RecipeDto> filterRecipesWithEmptyUrls() {
+        return recipeDto -> !recipeDto.getUrl().isEmpty();
+    }
+
+    private  <T> Predicate<T> filterDuplicateRecipes(Function<? super T, ?> keyExtractor) {
         Set<Object> seen = ConcurrentHashMap.newKeySet(); // Thread-safe Set for uniqueness
         return t -> seen.add(keyExtractor.apply(t));
     }
 
+    private boolean hasCompleteNutrients(RecipeDto recipeDto) {
+        if (recipeDto.getNutritionDto() == null || recipeDto.getNutritionDto().getRecipeNutrientDtoList() == null) {
+            return false;
+        }
 
+        List<RecipeNutrientDto> nutrients = recipeDto.getNutritionDto().getRecipeNutrientDtoList();
+        List<String> requiredNutrients = List.of("Calories", "Carbohydrates", "Protein", "Fat");
+
+        return requiredNutrients.stream().allMatch(nutrient -> hasValidNutrient(nutrients, nutrient));
+    }
+
+    private boolean hasValidNutrient(List<RecipeNutrientDto> nutrients, String nutrientName) {
+        return nutrients.stream()
+                .anyMatch(n -> nutrientName.equals(n.getName()) && n.getAmount() != null && n.getUnit() != null);
+    }
     @Override
     public void run(ApplicationArguments args) throws IOException {
- // ObjectMapper objectMapper = new ObjectMapper();
- // List<RecipeDto> recipes = fetchData();
-  //  List<RecipeDto> recipes = objectMapper.readValue(new File("recipes.json"),
-  //        objectMapper.getTypeFactory().constructCollectionType(List.class, RecipeDto.class));
-  // processData(recipes);
+        // ObjectMapper objectMapper = new ObjectMapper();
+        // List<RecipeDto> recipes = fetchData();
+        //  List<RecipeDto> recipes = objectMapper.readValue(new File("recipes.json"),
+        //        objectMapper.getTypeFactory().constructCollectionType(List.class, RecipeDto.class));
+        // processData(recipes);
     }
 
     private void writeToFile(List<RecipeDto> recipeDtoList) {
