@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 import java.util.Set;
 
 @Data
@@ -11,6 +12,6 @@ import java.util.Set;
 @NoArgsConstructor
 public class LunchRequestDto {
 private IndividualCharacteristicsDto characteristicsDto;
-    private Set<Long> cuisinePreferences;
+    private List<Integer> cuisinePreferences;
     private Set<String> ingredientsExclusions;
 }

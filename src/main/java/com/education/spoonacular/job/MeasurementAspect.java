@@ -1,10 +1,11 @@
 package com.education.spoonacular.job;
 
+import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
-
+@Slf4j
 @Aspect
 @Component
 public class MeasurementAspect {
@@ -14,7 +15,7 @@ public class MeasurementAspect {
         Object proceed = joinPoint.proceed();
         long executionTime = System.currentTimeMillis() - start;
         //TODO: logger
-        System.out.println("The process " + joinPoint.getSignature() + " executed in " + executionTime + "ms");
+        log.info("The process " + joinPoint.getSignature() + " executed in " + executionTime + "ms");
         return proceed;
     }
 }

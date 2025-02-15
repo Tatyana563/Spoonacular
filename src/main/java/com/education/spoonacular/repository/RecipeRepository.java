@@ -20,22 +20,23 @@ public interface RecipeRepository extends JpaRepository<Recipe, Integer> {
     List<String> findExistingRecipeNames(@Param("urls") Set<String> urls);
 
     @Query(value = """
-                SELECT r.recipe_id AS recipeId,
-                       r.recipe_name AS recipeName,
-                       r.dish_type AS dishType,
-                       array_agg(DISTINCT c.name) AS cuisines, 
-                       r.nutrient AS nutrient,
-                       r.ingredient AS ingredient
-                   
-                FROM recipe_nutrient_view r
-                     JOIN recipe_cuisine rc ON r.recipe_id = rc.recipeid
-                     JOIN cuisine c on c.id = rc.cuisineid  
-                WHERE r.recipe_id IN (:recipeIds)
-                  GROUP BY r.recipe_id, r.recipe_name,r.dish_type, r.nutrient,r.ingredient
-               
-""", nativeQuery = true)
+                            SELECT r.recipe_id AS recipeId,
+                                   r.recipe_name AS recipeName,
+                                   r.dish_type AS dishType,
+                                   array_agg(DISTINCT c.name) AS cuisines, 
+                                   r.nutrient AS nutrient,
+                                   r.ingredient AS ingredient
+                               
+                            FROM recipe_nutrient_view r
+                                 JOIN recipe_cuisine rc ON r.recipe_id = rc.recipeid
+                                 JOIN cuisine c on c.id = rc.cuisineid  
+                            WHERE r.recipe_id IN (:recipeIds)
+                              GROUP BY r.recipe_id, r.recipe_name,r.dish_type, r.nutrient,r.ingredient
+                           
+            """, nativeQuery = true)
     List<Tuple> findBasicRecipes(@Param("recipeIds") List<Integer> recipeIds);
 // TODO: HQL
+
     @Query(value = """
     SELECT r.id AS recipeId
     FROM Recipe r
@@ -60,12 +61,40 @@ public interface RecipeRepository extends JpaRepository<Recipe, Integer> {
     GROUP BY r.id
     """, nativeQuery = true)
     List<Integer> findBasicRecipesIds(
-            @Param("cuisinePreferences") Long[] cuisinePreferences,
+            @Param("cuisinePreferences") Integer[] cuisinePreferences,
             @Param("targetCalories") double targetCalories,
             @Param("allergies") String[] allergies,
             @Param("mealType") String mealType
     );
 
+//    @Query("""
+//                SELECT r.id
+//                FROM Recipe r
+//                JOIN r.recipeNutrients rn
+//                JOIN rn.nutrient n
+//            WHERE n.name = 'Calories'
+//                  AND rn.amount < :targetCalories
+//            AND (:cuisinePreferences IS NULL OR :cuisinePreferences = '' OR EXISTS (
+//                      SELECT 1 FROM r.cuisines rc WHERE rc.id IN (:cuisinePreferences)
+//                  ))
+//
+//                  AND r.dishType = :mealType
+//                  AND NOT EXISTS ( SELECT 1
+//                   FROM Recipe r
+//                JOIN r.recipeNutrients rn
+//                JOIN rn.nutrient n
+//                JOIN r.recipeIngredients ri
+//                JOIN ri.ingredient i
+//                 WHERE i.name IN :allergies
+//                    )
+//                GROUP BY r.id
+//                """)
+//    List<Integer> findBasicRecipesIds(
+//            @Param("cuisinePreferences") List<Integer> cuisinePreferences,
+//            @Param("targetCalories") double targetCalories,
+//            @Param("allergies") Set<String> allergies,
+//            @Param("mealType") String mealType
+//    );
 
 
     //https://thorben-janssen.com/spring-data-jpa-query-projections/

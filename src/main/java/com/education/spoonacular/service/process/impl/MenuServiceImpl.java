@@ -28,11 +28,11 @@ public class MenuServiceImpl implements MenuService {
 
         int metabolicRate = calculateBasalMetabolicRate(request.getCharacteristicsDto());
         int energyExpenditure = (int) Math.round(calculateEnergyExpenditure(request.getCharacteristicsDto().getActivityLevel(), metabolicRate));
-        Set<Long> cuisinePreferences = request.getCuisinePreferences();
+        List<Integer> cuisinePreferences = request.getCuisinePreferences();
 
         Set<String> allergens = request.getIngredientsExclusions();
         //TODO: use Lists
-        Long[] cuisineArray = (cuisinePreferences == null || cuisinePreferences.size() == 0) ? new Long[0] : cuisinePreferences.toArray(new Long[0]);
+        Integer[] cuisineArray = (cuisinePreferences == null || cuisinePreferences.size() == 0) ? new Integer[0] : cuisinePreferences.toArray(new Integer[0]);
         String[] allergiesArray = (allergens == null || allergens.size() == 0) ? new String[0] : allergens.toArray(new String[0]);
 
         List<Integer> suggestedRecipesForBreakfast = getSuggestedRecipesIdsForBreakfast(cuisineArray, energyExpenditure, allergiesArray, MealType.BREAKFAST);
@@ -117,7 +117,7 @@ public class MenuServiceImpl implements MenuService {
         return recipeDTOS;
     }
 
-    private List<Integer> getSuggestedRecipesIdsForBreakfast(Long[] cuisines, int targetCalories, String[] allergies, MealType mealType) {
+    private List<Integer> getSuggestedRecipesIdsForBreakfast(Integer[] cuisines, int targetCalories,  String[] allergies, MealType mealType) {
         return recipeRepository.findBasicRecipesIds(cuisines, targetCalories, allergies, mealType.name());
     }
 
