@@ -8,3 +8,6 @@ RecipeIngredientId not used?
 
 1) getShoppingList can I use projection?
 
+
+2)  look for by id not url and use map nutrients instead of
+
