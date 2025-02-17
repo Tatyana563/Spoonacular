@@ -2,8 +2,8 @@ package com.education.spoonacular.job;
 
 import com.education.spoonacular.config.JobConfig;
 import com.education.spoonacular.config.JobProperties;
+import com.education.spoonacular.dto.fetch.NutritionDto;
 import com.education.spoonacular.dto.fetch.RecipeDto;
-import com.education.spoonacular.dto.fetch.RecipeNutrientDto;
 import com.education.spoonacular.dto.fetch.ResponseDto;
 import com.education.spoonacular.dto.menu.MealType;
 import com.education.spoonacular.service.process.api.MainService;
@@ -41,6 +41,7 @@ public class StartupJob implements ApplicationRunner {
     private final SpoonSearchService spoonSearchService;
     private final MainService mainService;
     private final JobConfig jobConfig;
+    private static final List<String> REQUIRED_NUTRIENTS = List.of("Calories", "Carbohydrates", "Protein", "Fat");
 //TODO: create separate job for each category, add batch size
 
     private List<RecipeDto> fetchData() {
@@ -97,26 +98,26 @@ public class StartupJob implements ApplicationRunner {
         return recipeDto -> !recipeDto.getUrl().isEmpty();
     }
 
-    private  <T> Predicate<T> filterDuplicateRecipes(Function<? super T, ?> keyExtractor) {
+    private <T> Predicate<T> filterDuplicateRecipes(Function<? super T, ?> keyExtractor) {
         Set<Object> seen = ConcurrentHashMap.newKeySet(); // Thread-safe Set for uniqueness
         return t -> seen.add(keyExtractor.apply(t));
     }
 
     private boolean hasCompleteNutrients(RecipeDto recipeDto) {
-        if (recipeDto.getNutritionDto() == null || recipeDto.getNutritionDto().getRecipeNutrientDtoList() == null) {
-            return false;
-        }
 
-        List<RecipeNutrientDto> nutrients = recipeDto.getNutritionDto().getRecipeNutrientDtoList();
-        List<String> requiredNutrients = List.of("Calories", "Carbohydrates", "Protein", "Fat");
+        return Stream.of(recipeDto)
+                .filter(Objects::nonNull)
+                .map(RecipeDto::getNutritionDto)
+                .filter(Objects::nonNull)
+                .map(NutritionDto::getRecipeNutrientDtoList)
+                .filter(Objects::nonNull)
+                .flatMap(Collection::stream)
+                .filter(recipeNutrientDto -> REQUIRED_NUTRIENTS.contains(recipeNutrientDto.getName()))
+                .filter(recipeNutrientDto -> recipeNutrientDto.getAmount() != null && recipeNutrientDto.getUnit() != null)
+                .count() == REQUIRED_NUTRIENTS.size();
 
-        return requiredNutrients.stream().allMatch(nutrient -> hasValidNutrient(nutrients, nutrient));
     }
 
-    private boolean hasValidNutrient(List<RecipeNutrientDto> nutrients, String nutrientName) {
-        return nutrients.stream()
-                .anyMatch(n -> nutrientName.equals(n.getName()) && n.getAmount() != null && n.getUnit() != null);
-    }
     @Override
     public void run(ApplicationArguments args) throws IOException {
         // ObjectMapper objectMapper = new ObjectMapper();
