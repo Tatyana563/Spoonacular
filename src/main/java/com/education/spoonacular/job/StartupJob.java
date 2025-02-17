@@ -99,10 +99,10 @@ public class StartupJob implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws IOException {
- //ObjectMapper objectMapper = new ObjectMapper();
+// ObjectMapper objectMapper = new ObjectMapper();
 // List<RecipeDto> recipes = fetchData();
- // List<RecipeDto> recipes = objectMapper.readValue(new File("recipes.json"),
-  //    objectMapper.getTypeFactory().constructCollectionType(List.class, RecipeDto.class));
+//  List<RecipeDto> recipes = objectMapper.readValue(new File("recipes.json"),
+//      objectMapper.getTypeFactory().constructCollectionType(List.class, RecipeDto.class));
 // processData(recipes);
     }
 
