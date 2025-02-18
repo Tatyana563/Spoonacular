@@ -14,7 +14,7 @@ public class MeasurementAspect {
         long start = System.currentTimeMillis();
         Object proceed = joinPoint.proceed();
         long executionTime = System.currentTimeMillis() - start;
-        //TODO: logger
+
         log.info("The process " + joinPoint.getSignature() + " executed in " + executionTime + "ms");
         return proceed;
     }

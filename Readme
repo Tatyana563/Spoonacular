@@ -30,7 +30,7 @@ You can save these plans in the database and allow users to retrieve them later.
  --          JOIN nutrient n ON rn.nutrientid = n.id
  --          JOIN recipe_ingredient ri ON r.id = ri.recipeid
  --          JOIN ingredient i ON ri.ingredientid = i.id
- --TODO: use for this subquery EXISTS as below
+// use for this subquery EXISTS as below
  WHERE r.id IN (SELECT rn.recipeid FROM recipe_nutrient rn
                                 JOIN nutrient n ON rn.nutrientid = n.id
                        WHERE  n.name = 'Calories' AND rn.amount < :targetCalories)

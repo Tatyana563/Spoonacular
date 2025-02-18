@@ -42,7 +42,6 @@ public class StartupJob implements ApplicationRunner {
     private final MainService mainService;
     private final JobConfig jobConfig;
     private static final List<String> REQUIRED_NUTRIENTS = List.of("Calories", "Carbohydrates", "Protein", "Fat");
-//TODO: create separate job for each category, add batch size
 
     private List<RecipeDto> fetchData() {
         log.info("Job running after application start...");
@@ -78,14 +77,10 @@ public class StartupJob implements ApplicationRunner {
 
 
     private void processData(List<RecipeDto> recipeDtos) {
-        //TODO: combine 2 filter methods in 1 and use Predicate as constants
         Stream<RecipeDto> filteredRecipes = filterRecipes(recipeDtos);
         mainService.processResponse(filteredRecipes.collect(Collectors.toList()));
     }
 
-    //TODO: filter recipes if Calories and so on in null;
-
-    /* filter incomplete recipes and remove duplicates*/
     private Stream<RecipeDto> filterRecipes(List<RecipeDto> recipeDtos) {
         return recipeDtos.stream()
                 .filter(filterRecipesWithEmptyUrls())

@@ -56,7 +56,6 @@ public class NutrientServiceImpl extends AbstractGeneralService<Nutrient, Nutrie
     }
 
     @Override
-    //TODO: use mapstruct , read selma
     protected Nutrient createEntity(NutrientDto dto) {
         return nutrientDtoToNutrientMapper.mapNutrientDtoToNutrient(dto);
     }
