@@ -1,0 +1,68 @@
+{
+	"info": {
+		"_postman_id": "1833bded-eb1f-45f5-acbd-b1c0517650e6",
+		"name": "SPOONACULAR",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "11687989"
+	},
+	"item": [
+		{
+			"name": "http://localhost:8080/api/suggest-lunch",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"characteristicsDto\":{\r\n\"gender\": \"WOMAN\",\r\n\"activityLevel\": \"SEDENTARY\",\r\n\"goal\": \"LOOSE_WEIGHT\",\r\n\"height\": 170,\r\n\"weight\": 70,\r\n \"age\": 55\r\n    },\r\n\r\n \"cuisinePreferences\": [1],\r\n\"ingredientsExclusions\": [\"chocolate\"]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/suggest-lunch",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"suggest-lunch"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://localhost:8080/api/shopping-list",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"gender\": \"woman\",\r\n  \"activityLevel\": \"not_active\",\r\n  \"cuisinePreferences\": [\"Asian\", \"Mediterranean\"],\r\n  \"ingredientsExclusions\": [\"eggplant\"]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/suggest-lunch",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"suggest-lunch"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
