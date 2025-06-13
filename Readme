@@ -1,53 +1,5 @@
-Examples of filtering:
-1) @GetMapping("/filter")
-public ResponseEntity<List<Recipe>> filterRecipes(
-        @RequestParam(required = false) Integer maxPrepTime,
-        @RequestParam(required = false) String dietType,  // e.g., Vegan, Gluten-Free, etc.
-        @RequestParam(required = false) Integer maxCalories)
-
-2) Meal Planning
-Users can plan meals by selecting recipes for specific days of the week or times of the day (e.g., breakfast, lunch, dinner).
-You can save these plans in the database and allow users to retrieve them later.
-
-3) Generate a Shopping List
- Once users have selected their meal plans, you can aggregate the ingredients needed across all recipes and generate a shopping list.
-
- ---------------------------------------
- User fills the form:
- 1) Man/Woman
- 2) Active/Not active
- 3) Cuisine preferences?
- 4) Allergies
-
- Api returns suggested a few dishes for lunch
- ----------------------------------------
- Article used for calculation:
- https://www.nasm.org/resources/calorie-calculator#:~:text=You%20can%20calculate%20it%20using,%C3%97%20age%20in%20years)%20%2D%20161
-
- SELECT r.id
- FROM Recipe r
- --          JOIN recipe_nutrient rn ON r.id = rn.recipeid
- --          JOIN nutrient n ON rn.nutrientid = n.id
- --          JOIN recipe_ingredient ri ON r.id = ri.recipeid
- --          JOIN ingredient i ON ri.ingredientid = i.id
-// use for this subquery EXISTS as below
- WHERE r.id IN (SELECT rn.recipeid FROM recipe_nutrient rn
-                                JOIN nutrient n ON rn.nutrientid = n.id
-                       WHERE  n.name = 'Calories' AND rn.amount < :targetCalories)
-
-
-   AND (:cuisinePreferences = '{}' OR EXISTS (
-         SELECT 1 FROM recipe_cuisine rc WHERE rc.recipeid = r.id AND rc.cuisineid = ANY(:cuisinePreferences)
-     ))
-   AND r.dish_type = :mealType
-   AND NOT EXISTS (
-         SELECT 1 FROM recipe_ingredient ri
-                  JOIN ingredient i on ri.ingredientid = i.id
-         WHERE ri.recipeid = r.id
-           AND EXISTS (
-                 SELECT 1 FROM unnest(:allergies) AS allergy
-                 WHERE i.name ILIKE '%' || allergy || '%'
-             )
-     )
- -- GROUP BY r.id
+1) Create DB menu and run
+ mvn flyway:migrate
+2)Start app and StartupJob parses recipes from https://api.spoonacular.com/recipes/complexSearch and saves into DB
+3) Use SPOONACULAR.postman_collection.json to send requests.
 
