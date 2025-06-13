@@ -35,8 +35,8 @@ public class MenuServiceImpl implements MenuService {
         Integer[] cuisineArray = (cuisinePreferences == null || cuisinePreferences.size() == 0) ? new Integer[0] : cuisinePreferences.toArray(new Integer[0]);
         String[] allergiesArray = (allergens == null || allergens.size() == 0) ? new String[0] : allergens.toArray(new String[0]);
 
-        List<Integer> suggestedRecipesForBreakfast = getSuggestedRecipesIdsForBreakfast(cuisineArray, energyExpenditure, allergiesArray, MealType.BREAKFAST);
-        List<Integer> randomIdsFromList = findRandomIdsFromList(suggestedRecipesForBreakfast);
+        List<Integer> suggestedRecipesForLunch = getSuggestedRecipesIdsForBreakfast(cuisineArray, energyExpenditure, allergiesArray, MealType.LUNCH);
+        List<Integer> randomIdsFromList = findRandomIdsFromList(suggestedRecipesForLunch);
         return mapTuplesToRecipeDTO(getSuggestedRecipesForBreakfast(randomIdsFromList));
     }
 
