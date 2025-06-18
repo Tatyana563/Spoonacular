@@ -3,3 +3,6 @@
 2)Start app and StartupJob parses recipes from https://api.spoonacular.com/recipes/complexSearch and saves into DB
 3) Use SPOONACULAR.postman_collection.json to send requests.
 
+DEPLOY:
+1) mvn clean package
+
