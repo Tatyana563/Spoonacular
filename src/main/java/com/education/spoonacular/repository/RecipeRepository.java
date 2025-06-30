@@ -1,5 +1,6 @@
 package com.education.spoonacular.repository;
 
+import com.education.spoonacular.dto.menu.ShoppingListFlatDto;
 import com.education.spoonacular.entity.Recipe;
 import jakarta.persistence.Tuple;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -98,8 +99,10 @@ public interface RecipeRepository extends JpaRepository<Recipe, Integer> {
 
 
     //https://thorben-janssen.com/spring-data-jpa-query-projections/
-    // Scalar Projections
-    @Query("SELECT r.id AS id, r.name AS dish, " + "ri.ingredient.name AS ingredientName, ri.ingredient.unit AS ingredientUnit, ri.amount AS ingredientAmount " + "FROM Recipe r " + "JOIN r.recipeIngredients ri " + "WHERE r.id IN :recipeIds")
-    List<Tuple> getShoppingList(@Param("recipeIds") Set<Integer> recipeIds);
+    @Query("SELECT new com.education.spoonacular.dto.menu.ShoppingListFlatDto(r.id, r.name, ri.ingredient.name, ri.ingredient.unit, ri.amount) " +
+            "FROM Recipe r " +
+            "JOIN r.recipeIngredients ri " +
+            "WHERE r.id IN :recipeIds")
+    List<ShoppingListFlatDto> getShoppingList(@Param("recipeIds") Set<Integer> recipeIds);
 
 }

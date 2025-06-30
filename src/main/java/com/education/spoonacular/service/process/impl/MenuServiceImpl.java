@@ -3,9 +3,9 @@ package com.education.spoonacular.service.process.impl;
 import com.education.spoonacular.db_view.RecipeDTO;
 import com.education.spoonacular.db_view.ViewIngredient;
 import com.education.spoonacular.db_view.ViewNutrient;
-import com.education.spoonacular.dto.fetch.RecipeNutrientDto;
 import com.education.spoonacular.dto.menu.*;
 import com.education.spoonacular.repository.RecipeRepository;
+import com.education.spoonacular.service.mapper.ShoppingListMapper;
 import com.education.spoonacular.service.process.api.MenuService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 public class MenuServiceImpl implements MenuService {
     private final RecipeRepository recipeRepository;
     private final ObjectMapper objectMapper;
+    private final ShoppingListMapper shoppingListMapper;
     private static final Integer AMOUNT_OF_SUGGESTED_RECIPES = 3;
 
     public List<RecipeDTO> getSuggestedDishes(LunchRequestDto request) {
@@ -42,29 +43,8 @@ public class MenuServiceImpl implements MenuService {
 
     @Override
     public List<ShoppingListDto> getShoppingList(Set<Integer> dishIds) {
-        return mapTuplesToShoppingList(recipeRepository.getShoppingList(dishIds));
-    }
-
-    public List<ShoppingListDto> mapTuplesToShoppingList(List<Tuple> tuples) {
-        Map<Integer, ShoppingListDto> groupedByRecipe = new HashMap<>();
-
-        for (Tuple tuple : tuples) {
-            int recipeId = tuple.get("id", Integer.class);
-            String dish = tuple.get("dish", String.class);
-            String ingredientName = tuple.get("ingredientName", String.class);
-            String ingredientUnit = tuple.get("ingredientUnit", String.class);
-            Double ingredientAmount = tuple.get("ingredientAmount", Double.class);
-
-            if (!groupedByRecipe.containsKey(recipeId)) {
-                ShoppingListDto shoppingListDto = new ShoppingListDto(recipeId, dish, new ArrayList<>());
-                groupedByRecipe.put(recipeId, shoppingListDto);
-            }
-
-            ShoppingListDto shoppingListDto = groupedByRecipe.get(recipeId);
-            shoppingListDto.getIngredients().add(new RecipeNutrientDto(ingredientName, ingredientUnit, ingredientAmount));
-        }
-
-        return new ArrayList<>(groupedByRecipe.values());
+        List<ShoppingListFlatDto> shoppingList = recipeRepository.getShoppingList(dishIds);
+        return shoppingListMapper.toShoppingList(shoppingList);
     }
 
     private List<Integer> findRandomIdsFromList(List<Integer> recipeIds) {
@@ -117,7 +97,7 @@ public class MenuServiceImpl implements MenuService {
         return recipeDTOS;
     }
 
-    private List<Integer> getSuggestedRecipesIdsForBreakfast(Integer[] cuisines, int targetCalories,  String[] allergies, MealType mealType) {
+    private List<Integer> getSuggestedRecipesIdsForBreakfast(Integer[] cuisines, int targetCalories, String[] allergies, MealType mealType) {
         return recipeRepository.findBasicRecipesIds(cuisines, targetCalories, allergies, mealType.name());
     }
 
