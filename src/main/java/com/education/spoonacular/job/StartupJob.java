@@ -18,7 +18,6 @@ import org.springframework.stereotype.Component;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -65,14 +64,11 @@ public class StartupJob implements ApplicationRunner {
             List<String> dishes = entry.getValue();
 
             if (dishes.contains(dish)) {
-                try {
-                    return MealType.valueOf(mealType.toUpperCase());
-                } catch (IllegalArgumentException e) {
-                    throw new IllegalArgumentException("Invalid MealType mapping for: " + mealType, e);
-                }
+                return MealType.fromString(mealType);
             }
         }
-        throw new IllegalArgumentException("MealType can't be determined for dish: " + dish);
+        throw new IllegalArgumentException("MealType can't be determined for dish: " + dish
+                + "as dish is not in the allowed list");
     }
 
 
@@ -84,17 +80,16 @@ public class StartupJob implements ApplicationRunner {
     private Stream<RecipeDto> filterRecipes(List<RecipeDto> recipeDtos) {
         return recipeDtos.stream()
                 .filter(filterRecipesWithEmptyUrls())
-                .filter(filterDuplicateRecipes(RecipeDto::getUrl))
+                .filter(filterDuplicates(RecipeDto::getUrl))
                 .filter(this::hasCompleteNutrients);
-
     }
 
     private Predicate<RecipeDto> filterRecipesWithEmptyUrls() {
         return recipeDto -> !recipeDto.getUrl().isEmpty();
     }
 
-    private <T> Predicate<T> filterDuplicateRecipes(Function<? super T, ?> keyExtractor) {
-        Set<Object> seen = ConcurrentHashMap.newKeySet(); // Thread-safe Set for uniqueness
+    private <T> Predicate<T> filterDuplicates(Function<? super T, ?> keyExtractor) {
+        Set<Object> seen = new HashSet<>();
         return t -> seen.add(keyExtractor.apply(t));
     }
 
