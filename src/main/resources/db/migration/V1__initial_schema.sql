@@ -66,7 +66,7 @@ CREATE OR REPLACE VIEW recipe_nutrient_view AS
 SELECT DISTINCT r.id AS recipe_id,
                 r.name AS recipe_name,
                 r.dish_type AS dish_type,
-                c.name AS cuisine_name,
+                jsonb_agg(DISTINCT c.name) AS cuisines,
                 jsonb_agg(DISTINCT jsonb_build_object('name', n.name, 'amount', rn.amount, 'unit',n.unit)) AS nutrient,
                 jsonb_agg(DISTINCT jsonb_build_object('name', i.name, 'amount', ri.amount,'unit',i.unit)) AS ingredient
 FROM recipe r
@@ -77,6 +77,6 @@ FROM recipe r
          JOIN cuisine c ON c.id = rc.cuisineid
          JOIN ingredient i ON ri.ingredientid = i.id
 WHERE n.name IN ('Carbohydrates', 'Protein', 'Fat', 'Calories')
-GROUP BY r.name, r.id, c.name;
+GROUP BY r.name, r.id, r.dish_type;
 
 

@@ -1,10 +1,12 @@
 package com.education.spoonacular.service.process.impl;
 
 import com.education.spoonacular.db_view.RecipeDTO;
+import com.education.spoonacular.db_view.RecipeDTOView;
 import com.education.spoonacular.db_view.ViewIngredient;
 import com.education.spoonacular.db_view.ViewNutrient;
 import com.education.spoonacular.dto.menu.*;
 import com.education.spoonacular.repository.RecipeRepository;
+import com.education.spoonacular.service.mapper.RecipeDTOViewToRecipeDTOMapper;
 import com.education.spoonacular.service.mapper.ShoppingListMapper;
 import com.education.spoonacular.service.process.api.MenuService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -23,6 +25,7 @@ public class MenuServiceImpl implements MenuService {
     private final RecipeRepository recipeRepository;
     private final ObjectMapper objectMapper;
     private final ShoppingListMapper shoppingListMapper;
+    private final RecipeDTOViewToRecipeDTOMapper recipeDTOMapper;
     private static final Integer AMOUNT_OF_SUGGESTED_RECIPES = 3;
 
     public List<RecipeDTO> getSuggestedDishes(LunchRequestDto request) {
@@ -38,7 +41,9 @@ public class MenuServiceImpl implements MenuService {
 
         List<Integer> suggestedRecipesForLunch = getSuggestedRecipesIdsForBreakfast(cuisineArray, energyExpenditure, allergiesArray, MealType.LUNCH);
         List<Integer> randomIdsFromList = findRandomIdsFromList(suggestedRecipesForLunch);
-        return mapTuplesToRecipeDTO(getSuggestedRecipesForBreakfast(randomIdsFromList));
+        List<RecipeDTOView> suggestedRecipesForBreakfast = getSuggestedRecipesForBreakfast(randomIdsFromList);
+        List<RecipeDTO> recipeDTOS = recipeDTOMapper.toDTO(suggestedRecipesForBreakfast);
+        return recipeDTOS;
     }
 
     @Override
@@ -64,7 +69,7 @@ public class MenuServiceImpl implements MenuService {
             String name = tuple.get("recipeName", String.class);
             String dishType = tuple.get("dishType", String.class);
 
-            String[] cuisineArray = tuple.get("cuisines", String[].class);
+            String cuisineArray = tuple.get("cuisines", String.class);
             Set<String> cuisineName = cuisineArray != null ? new HashSet<>(Arrays.asList(cuisineArray)) : new HashSet<>();
 
 
@@ -101,7 +106,7 @@ public class MenuServiceImpl implements MenuService {
         return recipeRepository.findBasicRecipesIds(cuisines, targetCalories, allergies, mealType.name());
     }
 
-    private List<Tuple> getSuggestedRecipesForBreakfast(List<Integer> recipeIds) {
+    private List<RecipeDTOView> getSuggestedRecipesForBreakfast(List<Integer> recipeIds) {
         return recipeRepository.findBasicRecipes(recipeIds);
     }
 
