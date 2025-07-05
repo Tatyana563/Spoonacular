@@ -1,6 +1,6 @@
 package com.education.spoonacular.entity;
 
-import com.education.spoonacular.db_view.RecipeDTOView;
+import com.education.spoonacular.view.RecipeDTOView;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;

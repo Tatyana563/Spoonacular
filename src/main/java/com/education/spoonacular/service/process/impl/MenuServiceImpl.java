@@ -1,9 +1,9 @@
 package com.education.spoonacular.service.process.impl;
 
-import com.education.spoonacular.db_view.RecipeDTO;
-import com.education.spoonacular.db_view.RecipeDTOView;
-import com.education.spoonacular.db_view.ViewIngredient;
-import com.education.spoonacular.db_view.ViewNutrient;
+import com.education.spoonacular.view.RecipeDTO;
+import com.education.spoonacular.view.RecipeDTOView;
+import com.education.spoonacular.view.ViewIngredient;
+import com.education.spoonacular.view.ViewNutrient;
 import com.education.spoonacular.dto.menu.*;
 import com.education.spoonacular.repository.RecipeRepository;
 import com.education.spoonacular.service.mapper.RecipeDTOViewToRecipeDTOMapper;

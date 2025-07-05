@@ -1,6 +1,6 @@
 package com.education.spoonacular.controller;
 
-import com.education.spoonacular.db_view.RecipeDTO;
+import com.education.spoonacular.view.RecipeDTO;
 import com.education.spoonacular.dto.menu.LunchRequestDto;
 import com.education.spoonacular.dto.menu.ShoppingListDto;
 import com.education.spoonacular.service.process.api.MenuService;

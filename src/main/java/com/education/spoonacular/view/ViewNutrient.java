@@ -1,4 +1,4 @@
-package com.education.spoonacular.db_view;
+package com.education.spoonacular.view;
 
 import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;

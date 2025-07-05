@@ -62,21 +62,3 @@ CREATE TABLE IF NOT EXISTS recipe_cuisine
     CONSTRAINT fk_cuisineId FOREIGN KEY (cuisineId) REFERENCES cuisine (id)
 );
 
-CREATE OR REPLACE VIEW recipe_nutrient_view AS
-SELECT DISTINCT r.id AS recipe_id,
-                r.name AS recipe_name,
-                r.dish_type AS dish_type,
-                jsonb_agg(DISTINCT c.name) AS cuisines,
-                jsonb_agg(DISTINCT jsonb_build_object('name', n.name, 'amount', rn.amount, 'unit',n.unit)) AS nutrient,
-                jsonb_agg(DISTINCT jsonb_build_object('name', i.name, 'amount', ri.amount,'unit',i.unit)) AS ingredient
-FROM recipe r
-         JOIN recipe_nutrient rn ON r.id = rn.recipeid
-         JOIN recipe_ingredient ri ON r.id = ri.recipeid
-         JOIN nutrient n ON rn.nutrientid = n.id
-         JOIN recipe_cuisine rc ON r.id = rc.recipeid
-         JOIN cuisine c ON c.id = rc.cuisineid
-         JOIN ingredient i ON ri.ingredientid = i.id
-WHERE n.name IN ('Carbohydrates', 'Protein', 'Fat', 'Calories')
-GROUP BY r.name, r.id, r.dish_type;
-
-

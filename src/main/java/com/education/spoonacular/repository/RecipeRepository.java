@@ -1,6 +1,6 @@
 package com.education.spoonacular.repository;
 
-import com.education.spoonacular.db_view.RecipeDTOView;
+import com.education.spoonacular.view.RecipeDTOView;
 import com.education.spoonacular.dto.menu.ShoppingListFlatDto;
 import com.education.spoonacular.entity.Recipe;
 import org.springframework.data.jpa.repository.JpaRepository;
