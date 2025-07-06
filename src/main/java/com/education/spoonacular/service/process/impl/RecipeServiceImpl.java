@@ -7,6 +7,9 @@ import com.education.spoonacular.entity.*;
 import com.education.spoonacular.repository.IngredientRepository;
 import com.education.spoonacular.repository.NutrientRepository;
 import com.education.spoonacular.repository.RecipeRepository;
+import com.education.spoonacular.service.exception.MissingCuisinesException;
+import com.education.spoonacular.service.exception.MissingIngredientsException;
+import com.education.spoonacular.service.exception.MissingNutrientsException;
 import com.education.spoonacular.service.process.api.CuisineService;
 import com.education.spoonacular.service.process.api.RecipeService;
 import lombok.RequiredArgsConstructor;
@@ -50,8 +53,7 @@ public class RecipeServiceImpl extends AbstractGeneralService<Recipe, RecipeDto>
         recipeEntity.setDishType(dto.getMealType().name());
         List<Cuisine> savedCuisines = cuisineService.findByNames(dto.getCuisines());
         if (savedCuisines.size() != dto.getCuisines().size()) {
-            throw new IllegalStateException(String.format("Cuisines were not found for recipe with name '%s' and url: '%s'",
-                    dto.getName(), dto.getUrl()));
+            throw new MissingCuisinesException(dto.getName(), dto.getUrl());
         }
         recipeEntity.setCuisines(savedCuisines);
 
@@ -65,13 +67,11 @@ public class RecipeServiceImpl extends AbstractGeneralService<Recipe, RecipeDto>
         List<Ingredient> ingredientRepositoryByName = ingredientRepository.findByNames(ingredientDtoNames);
 
         if (nutrientRepositoryByName.size() != nutrientDtoNames.size()) {
-            throw new IllegalStateException(String.format("Nutrients amount from DB is not equivalent the required for recipe with name '%s' and url: '%s'",
-                    dto.getName(), dto.getUrl()));
+            throw new MissingNutrientsException(dto.getName(), dto.getUrl());
         }
 
         if (ingredientRepositoryByName.size() != ingredientDtoNames.stream().distinct().collect(Collectors.toList()).size()) {
-            throw new IllegalStateException(String.format("Ingredients amount from DB is not equivalent the required for recipe with name '%s' and url: '%s'",
-                    dto.getName(), dto.getUrl()));
+            throw new MissingIngredientsException(dto.getName(), dto.getUrl());
         }
         Map<String, RecipeNutrientDto> recipeNutrientDtoMap = dto.getNutritionDto().getRecipeNutrientDtoList().stream().collect(Collectors.toMap(
                 RecipeNutrientDto::getName,

@@ -6,6 +6,7 @@ import com.education.spoonacular.dto.fetch.NutritionDto;
 import com.education.spoonacular.dto.fetch.RecipeDto;
 import com.education.spoonacular.dto.fetch.ResponseDto;
 import com.education.spoonacular.dto.menu.MealType;
+import com.education.spoonacular.service.exception.InvalidMealTypeException;
 import com.education.spoonacular.service.process.api.MainService;
 import com.education.spoonacular.service.search.SpoonSearchService;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -60,23 +61,16 @@ public class StartupJob implements ApplicationRunner {
             recipeDto.stream().forEach(recipeDto1 -> recipeDto1.setMealType(mealType));
             recipeDtos.addAll(recipeDto);
         }
-        writeToFile(recipeDtos);
         return recipeDtos;
     }
 
     private MealType determineMealType(String dish) {
-        for (Map.Entry<String, List<String>> entry : MEAL_DISH.entrySet()) {
-            String mealType = entry.getKey();
-            List<String> dishes = entry.getValue();
-
-            if (dishes.contains(dish)) {
-                return MealType.fromString(mealType);
-            }
-        }
-        throw new IllegalArgumentException("MealType can't be determined for dish: " + dish
-                + "as dish is not in the allowed list");
+        return MEAL_DISH.entrySet().stream()
+                .filter(entry -> entry.getValue().contains(dish))
+                .map(entry -> MealType.fromString(entry.getKey()))
+                .findFirst()
+                .orElseThrow(() -> new InvalidMealTypeException(dish));
     }
-
 
     private void processData(List<RecipeDto> recipeDtos) {
         Stream<RecipeDto> filteredRecipes = filterRecipes(recipeDtos);
@@ -145,18 +139,6 @@ public class StartupJob implements ApplicationRunner {
 
         } catch (IOException e) {
             log.error("Error executing job", e);
-        }
-    }
-
-    private void writeToFile(List<RecipeDto> recipeDtoList) {
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-
-            objectMapper.writerWithDefaultPrettyPrinter().writeValue(new File("recipes.json"), recipeDtoList);
-
-            System.out.println("Recipes written to file in JSON format successfully!");
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 }
