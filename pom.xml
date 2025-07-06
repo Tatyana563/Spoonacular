@@ -125,7 +125,7 @@
                 <groupId>org.flywaydb</groupId>
                 <artifactId>flyway-maven-plugin</artifactId>
                 <configuration>
-                    <url>jdbc:postgresql://cdkpostgresdemostack-menuab1f6481-pmwhwsbd4sni.cermqy24eyt2.us-east-1.rds.amazonaws.com:5432/postgres</url>
+                    <url>jdbc:postgresql://localhost:5432/menu</url>
                     <user>postgres</user>
                     <password>apple25</password>
                 </configuration>

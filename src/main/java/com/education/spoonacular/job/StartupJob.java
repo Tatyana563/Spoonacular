@@ -8,11 +8,14 @@ import com.education.spoonacular.dto.fetch.ResponseDto;
 import com.education.spoonacular.dto.menu.MealType;
 import com.education.spoonacular.service.process.api.MainService;
 import com.education.spoonacular.service.search.SpoonSearchService;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -27,6 +30,9 @@ import java.util.stream.Stream;
 @Component
 @RequiredArgsConstructor
 public class StartupJob implements ApplicationRunner {
+
+    @Value("${recipe.job.source}")
+    private String recipeSource;
     private static final List<String> BREAKFAST_DISHES = Arrays.asList("pancakes");
     private static final List<String> LUNCH_DISHES = Arrays.asList("soup", "pasta");
     private static final List<String> DINNER_DISHES = Arrays.asList("salad");
@@ -110,11 +116,36 @@ public class StartupJob implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws IOException {
-        // ObjectMapper objectMapper = new ObjectMapper();
-         List<RecipeDto> recipes = fetchData();
-        //  List<RecipeDto> recipes = objectMapper.readValue(new File("recipes.json"),
-        //        objectMapper.getTypeFactory().constructCollectionType(List.class, RecipeDto.class));
-         processData(recipes);
+        log.info("Running job on application startup...");
+        executeJob();
+    }
+
+    // Run every Monday at 1:00 AM
+    @Scheduled(cron = "0 0 1 ? * MON")
+    public void scheduledRun() {
+        log.info("Running weekly scheduled job...");
+        executeJob();
+    }
+
+    private void executeJob() {
+        try {
+            List<RecipeDto> recipes;
+            if ("remote".equalsIgnoreCase(recipeSource)) {
+                recipes = fetchData();
+                log.info("Fetched {} recipes remotely.", recipes.size());
+            } else {
+                ObjectMapper objectMapper = new ObjectMapper();
+                recipes = objectMapper.readValue(new File("recipes.json"),
+                        new TypeReference<List<RecipeDto>>() {
+                        });
+                log.info("Loaded {} recipes from file.", recipes.size());
+            }
+
+            processData(recipes);
+
+        } catch (IOException e) {
+            log.error("Error executing job", e);
+        }
     }
 
     private void writeToFile(List<RecipeDto> recipeDtoList) {
