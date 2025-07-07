@@ -1,14 +1,38 @@
-# Start from an OpenJDK base image
-FROM openjdk:17-jdk-slim
+# ---------- Stage 1: Build the application ----------
+FROM bellsoft/liberica-runtime-container:jdk-17-musl as builder
 
-# Set the working directory in the container
+WORKDIR /home/app
+
+# Add the source code into the build container
+ADD . /home/app/spoonacular
+
+# Build the Spring Boot app (skip tests for speed)
+RUN cd spoonacular && ./mvnw -Dmaven.test.skip=true clean package
+
+# ---------- Stage 2: Extract JAR layers ----------
+FROM bellsoft/liberica-runtime-container:jdk-17-musl as optimizer
+
+WORKDIR /home/app
+
+# Copy the built JAR from the builder stage
+COPY --from=builder /home/app/spoonacular/target/*.jar app.jar
+
+# Use Spring Boot layertools to extract layers
+RUN java -Djarmode=layertools -jar app.jar extract
+
+# ---------- Stage 3: Minimal runtime image ----------
+FROM bellsoft/liberica-runtime-container:jre-17-musl
+
 WORKDIR /app
 
-# Copy the Spring Boot JAR file into the container
-COPY target/spoonacular-0.0.1-SNAPSHOT.jar spoonacular.jar
+# Copy individual layers for optimized caching
+COPY --from=optimizer /home/app/dependencies/ ./
+COPY --from=optimizer /home/app/spring-boot-loader/ ./
+COPY --from=optimizer /home/app/snapshot-dependencies/ ./
+COPY --from=optimizer /home/app/application/ ./
 
-# Expose the port your Spring Boot app runs on (default 8080)
+# Expose the application port
 EXPOSE 8080
 
-# Run the jar file
-ENTRYPOINT ["java", "-jar", "spoonacular.jar"]
+# Start the application using Spring Boot’s layered launcher
+ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]
