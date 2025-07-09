@@ -1,9 +1,22 @@
-1) Create DB menu and run
- mvn flyway:migrate
-2) Start app and StartupJob parses recipes from https://api.spoonacular.com/recipes/complexSearch and saves into DB
-3) Use SPOONACULAR.postman_collection.json to send requests.
+Setup Instructions
+1. Create the Database and Run Migrations
+mvn flyway:migrate
 
-DEPLOY:
-1) docker compose up --build
-Make sure .env is present in the same directory with POSTGRES_PASSWORD=place_password_here
+2. Start the Application
+The app will launch and StartupJob will automatically fetch and store recipes from:
+https://api.spoonacular.com/recipes/complexSearch
+
+3. Test the API
+Use the provided Postman collection:
+src/main/resources/SPOONACULAR.postman_collection.json
+Import it into Postman to send test requests.
+
+Deployment (Docker)
+1. Build and Run the App
+docker compose up --build
+
+2. Environment File
+Ensure a .env file is present in the same directory with the following variable:
+
+POSTGRES_PASSWORD=place_password_here
 
