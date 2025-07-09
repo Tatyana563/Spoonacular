@@ -27,4 +27,4 @@ jobs:
         with:
           context: .
           push: true
-          tags:tetyana5633/spoonacular:latest
+          tags: tetyana5633/spoonacular:latest
