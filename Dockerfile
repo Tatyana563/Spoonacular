@@ -6,6 +6,9 @@ WORKDIR /home/app
 # Add the source code into the build container
 ADD . /home/app/spoonacular
 
+# Ensure mvnw is executable
+RUN chmod +x /home/app/spoonacular/mvnw
+
 # Build the Spring Boot app (skip tests for speed)
 RUN cd spoonacular && ./mvnw -Dmaven.test.skip=true clean package
 
