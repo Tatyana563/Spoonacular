@@ -12,6 +12,7 @@ services:
 
   app:
     build: .
+    image: spoonacular-app:latest   # <-- This names the image
     ports:
       - "8585:8080"
     depends_on:
