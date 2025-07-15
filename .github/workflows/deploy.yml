@@ -16,7 +16,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          aws-region: us-east-1   # change to your region
+          aws-region: us-east-1
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
@@ -25,23 +25,21 @@ jobs:
           INSTANCE_ID=${{ secrets.EC2_INSTANCE_ID }}
           echo "Deploying to instance $INSTANCE_ID"
 
+          POSTGRES_PASSWORD=$(aws secretsmanager get-secret-value --secret-id postgres-db-password
+          --query SecretString --output text | jq -r .postgres_password)
+
           aws ssm send-command \
             --instance-ids "$INSTANCE_ID" \
             --document-name "AWS-RunShellScript" \
             --comment "Deploy Spring Boot Docker app" \
-            --parameters commands=$(cat <<EOF
-              SPRING_DATASOURCE_URL="${{ secrets.SPRING_DATASOURCE_URL }}"
-              SPRING_DATASOURCE_USERNAME="${{ secrets.SPRING_DATASOURCE_USERNAME }}"
-              POSTGRES_PASSWORD=$(aws secretsmanager get-secret-value --secret-id postgres-db-password --query SecretString --output text | jq -r .postgres_password)
-
-              docker pull $IMAGE_NAME
-              docker stop spoonacular-app || true
-              docker rm spoonacular-app || true
-              docker run -d --name spoonacular-app -p 8080:8080 \
-                -e SPRING_DATASOURCE_URL="\$SPRING_DATASOURCE_URL" \
-                -e SPRING_DATASOURCE_USERNAME="\$SPRING_DATASOURCE_USERNAME" \
-                -e SPRING_DATASOURCE_PASSWORD="\$POSTGRES_PASSWORD" \
-                $IMAGE_NAME
-            EOF
-            ) \
+            --parameters commands='[
+              "SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }}",
+              "SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}",
+              "POSTGRES_PASSWORD='"$POSTGRES_PASSWORD"'",
+              "docker pull '"$IMAGE_NAME"'",
+              "docker stop spoonacular-app || true",
+              "docker rm spoonacular-app || true",
+              "docker run -d --name spoonacular-app -p 8080:8080 -e SPRING_DATASOURCE_URL=\$SPRING_DATASOURCE_URL -e
+          SPRING_DATASOURCE_USERNAME=\$SPRING_DATASOURCE_USERNAME -e SPRING_DATASOURCE_PASSWORD=\$POSTGRES_PASSWORD '"$IMAGE_NAME"'"
+            ]' \
             --output text
