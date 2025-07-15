@@ -1,0 +1,38 @@
+name: Deploy Spring Boot App to EC2
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: tetyana5633/spoonacular:latest
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          env:
+            SPRING_DATASOURCE_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
+            SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
+          script: |
+            # Pull the latest app image from Docker Hub
+            docker pull $IMAGE_NAME
+            
+            # Stop and remove the old app container if it exists
+            docker stop spoonacular-app || true
+            docker rm spoonacular-app || true
+
+            # Run the new app container with environment variables
+            docker run -d --name spoonacular-app -p 8080:8080 \
+              -e SPRING_DATASOURCE_URL=$SPRING_DATASOURCE_URL \
+              -e SPRING_DATASOURCE_USERNAME=$SPRING_DATASOURCE_USERNAME \
+              -e SPRING_DATASOURCE_PASSWORD=$(aws secretsmanager get-secret-value --secret-id postgres-db-password --query SecretString --output text | jq -r .postgres_password) \
+              $IMAGE_NAME
