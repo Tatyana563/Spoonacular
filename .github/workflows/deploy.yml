@@ -23,25 +23,30 @@ jobs:
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
 
+      - name: Get PostgreSQL Password
+        id: get-secret
+        run: |
+          secret=$(aws secretsmanager get-secret-value --secret-id postgres-db-password --query SecretString --output text)
+          password=$(echo "$secret" | jq -r .postgres_password)
+          echo "POSTGRES_PASSWORD=$password" >> $GITHUB_ENV
+
       - name: Deploy via SSM Run Command
         run: |
           INSTANCE_ID=${{ secrets.EC2_INSTANCE_ID }}
           echo "Deploying to instance $INSTANCE_ID"
 
-          POSTGRES_PASSWORD=$(aws secretsmanager get-secret-value --secret-id postgres-db-password \
-            --query SecretString --output text | jq -r .postgres_password)
-
           aws ssm send-command \
             --instance-ids "$INSTANCE_ID" \
             --document-name "AWS-RunShellScript" \
             --comment "Deploy Spring Boot Docker app" \
-            --parameters commands='[
-              "SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }}",
-              "SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}",
-              "POSTGRES_PASSWORD='"$POSTGRES_PASSWORD"'",
-              "docker pull '"$IMAGE_NAME"'",
+            --parameters 'commands=[
               "docker stop spoonacular-app || true",
               "docker rm spoonacular-app || true",
-              "docker run -d --name spoonacular-app -p 8080:8080 -e SPRING_DATASOURCE_URL=\$SPRING_DATASOURCE_URL -e SPRING_DATASOURCE_USERNAME=\$SPRING_DATASOURCE_USERNAME -e SPRING_DATASOURCE_PASSWORD=\$POSTGRES_PASSWORD '"$IMAGE_NAME"'"
+              "docker pull '"${{ env.IMAGE_NAME }}"'",
+              "docker run -d --name spoonacular-app -p 8080:8080 \
+                -e SPRING_DATASOURCE_URL='${{ secrets.SPRING_DATASOURCE_URL }}' \
+                -e SPRING_DATASOURCE_USERNAME='${{ secrets.SPRING_DATASOURCE_USERNAME }}' \
+                -e SPRING_DATASOURCE_PASSWORD='${{ env.POSTGRES_PASSWORD }}' \
+                '"${{ env.IMAGE_NAME }}"'"
             ]' \
             --output text
