@@ -25,4 +25,7 @@ This mounts the Docker socket from your host into the container.
 It gives the Trivy container access to your host's Docker daemon.
 This command runs a temporary Trivy container that scans your spoonacular-app Docker image, prints the results, and then deletes itself.
 docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image spoonacular-app:latest
+.
+
+
 
