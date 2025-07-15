@@ -19,20 +19,21 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          env:
-            SPRING_DATASOURCE_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
-            SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
           script: |
+            # Export env variables from GitHub Secrets for use in this SSH session
+            SPRING_DATASOURCE_URL="${{ secrets.SPRING_DATASOURCE_URL }}"
+            SPRING_DATASOURCE_USERNAME="${{ secrets.SPRING_DATASOURCE_USERNAME }}"
+
             # Pull the latest app image from Docker Hub
             docker pull $IMAGE_NAME
-            
+
             # Stop and remove the old app container if it exists
             docker stop spoonacular-app || true
             docker rm spoonacular-app || true
 
             # Run the new app container with environment variables
             docker run -d --name spoonacular-app -p 8080:8080 \
-              -e SPRING_DATASOURCE_URL=$SPRING_DATASOURCE_URL \
-              -e SPRING_DATASOURCE_USERNAME=$SPRING_DATASOURCE_USERNAME \
+              -e SPRING_DATASOURCE_URL="$SPRING_DATASOURCE_URL" \
+              -e SPRING_DATASOURCE_USERNAME="$SPRING_DATASOURCE_USERNAME" \
               -e SPRING_DATASOURCE_PASSWORD=$(aws secretsmanager get-secret-value --secret-id postgres-db-password --query SecretString --output text | jq -r .postgres_password) \
               $IMAGE_NAME
