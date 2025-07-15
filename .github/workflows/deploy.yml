@@ -20,13 +20,16 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
       - name: Deploy via SSM Run Command
         run: |
           INSTANCE_ID=${{ secrets.EC2_INSTANCE_ID }}
           echo "Deploying to instance $INSTANCE_ID"
 
-          POSTGRES_PASSWORD=$(aws secretsmanager get-secret-value --secret-id postgres-db-password
-          --query SecretString --output text | jq -r .postgres_password)
+          POSTGRES_PASSWORD=$(aws secretsmanager get-secret-value --secret-id postgres-db-password \
+            --query SecretString --output text | jq -r .postgres_password)
 
           aws ssm send-command \
             --instance-ids "$INSTANCE_ID" \
@@ -39,7 +42,6 @@ jobs:
               "docker pull '"$IMAGE_NAME"'",
               "docker stop spoonacular-app || true",
               "docker rm spoonacular-app || true",
-              "docker run -d --name spoonacular-app -p 8080:8080 -e SPRING_DATASOURCE_URL=\$SPRING_DATASOURCE_URL -e
-          SPRING_DATASOURCE_USERNAME=\$SPRING_DATASOURCE_USERNAME -e SPRING_DATASOURCE_PASSWORD=\$POSTGRES_PASSWORD '"$IMAGE_NAME"'"
+              "docker run -d --name spoonacular-app -p 8080:8080 -e SPRING_DATASOURCE_URL=\$SPRING_DATASOURCE_URL -e SPRING_DATASOURCE_USERNAME=\$SPRING_DATASOURCE_USERNAME -e SPRING_DATASOURCE_PASSWORD=\$POSTGRES_PASSWORD '"$IMAGE_NAME"'"
             ]' \
             --output text
