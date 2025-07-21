@@ -25,7 +25,161 @@ This mounts the Docker socket from your host into the container.
 It gives the Trivy container access to your host's Docker daemon.
 This command runs a temporary Trivy container that scans your spoonacular-app Docker image, prints the results, and then deletes itself.
 docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image spoonacular-app:latest
-.
+
+
+# Deploying Dockerized Spring Boot to EC2 Using GitHub Actions
+
+### 1. Create Secrets in AWS Secrets Manager
+
+* **postgres-db-password**:
+  Create a secret with a key named `postgres_password`.
+
+##  2. Configure GitHub Repository Secrets
+
+Navigate to your repo on GitHub:
+**Spoonacular -> Settings → Secrets and variables → Actions** → **New repository secret**
+Add the following:
+
+| Key                          | Description                    |
+| ---------------------------- | ------------------------------ |
+| `AWS_ACCESS_KEY_ID`          | AWS access key                 |
+| `AWS_SECRET_ACCESS_KEY`      | AWS secret access key          |
+| `DOCKER_USERNAME`            | Docker Hub username            |
+| `DOCKER_PASSWORD`            | Docker Hub password/token      |
+| `EC2_INSTANCE_ID`            | Your EC2 instance ID           |
+| `EC2_USER`                   | `ec2-user`                     |
+| `SPRING_DATASOURCE_USERNAME` | DB username                    |
+
+---
+
+## 3. Create VPC and Subnets
+* **VPC**: 10.0.0.0/16 ( ( DNS hostnames і DNS resolution!!!))
+* **Internet Gateway** (attach to vpc!)
+(my-public-subnet-1 and my-public-subnet-2 must be in different Availability zones, like us-east-1a and us-east-1b)
+| Name                  | CIDR Block  | Type    |
+| --------------------- | ----------- | ------- |
+| `my-public-subnet-1`  | 10.0.1.0/24 | Public  |
+| `my-public-subnet-2`  | 10.0.3.0/24 | Public  |
+| `my-private-subnet-1` | 10.0.2.0/24 | Private |
+| `my-private-subnet-2` | 10.0.4.0/24 | Private |
+
+* **NAT Gateway (in public subnet)**
+
+**Route Tables**:
+
+**Public Route Table**:
+
+| Destination | Target           |
+| ----------- | ---------------- |
+| 10.0.0.0/16 | local            |
+| 0.0.0.0/0   | Internet Gateway |
+
+**Private Route Table**:
+
+| Destination | Target      |
+| ----------- | ----------- |
+| 10.0.0.0/16 | local       |
+| 0.0.0.0/0   | NAT Gateway |
+
+---
+Then, VPC Console → Route Tables-> Subnet Associations
+
+## 4. Launch EC2 Instance
+Create an IAM Role for EC2 (e.g., EC2SecretsAccessRole with Permissions SecretsManagerReadWrite AND AmazonSSMManagedInstanceCore)
+* Use Amazon Linux 2023 ( t2.micro)
+
+##  5. Docker, Run PostgreSQL Container on EC2 (Perhaps can be moved to User Data?)
+```bash
+sudo dnf install -y docker container-selinux
+sudo systemctl daemon-reload
+sudo systemctl start docker
+sudo systemctl enable docker
+sudo systemctl status docker
+sudo yum install -y aws-cli jq
+docker network create spoonacular-network
+```
+
+```bash
+POSTGRES_PASSWORD=$(aws secretsmanager get-secret-value \
+  --secret-id postgres-db-password \
+  --query SecretString --output text | jq -r .postgres_password)
+
+docker run -d \
+  --name postgres-db \
+  --network spoonacular-network \
+  -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_DB=postgres \
+  -p 5432:5432 \
+  postgres:14
+```
+##  7. Create ALB and Target Group
+
+1. Create **Application Load Balancer** (ALB)
+2. Create a **Target Group** (type: instance) pointing to your EC2 with /actuator/health as Health check path
+3. Register your EC2 instance
+4. Add listener for HTTP on port `8080`
+
+## 8. Configure EC2 and ALB Security Groups
+
+### EC2 Instance SG
+
+**Inbound:**
+
+| Type | Protocol | Port | Source                | Purpose          |
+| ---- | -------- | ---- | --------------------- | ---------------- |
+| HTTP | TCP      | 8080 | ALB Security Group ID | ALB → EC2 access |
+
+**Outbound:**
+
+| Type        | Protocol | Port | Destination | Purpose         |
+| ----------- | -------- | ---- | ----------- | --------------- |
+| All traffic | All      | All  | 0.0.0.0/0   | Internet access |
+| All traffic | All      | 443  | 0.0.0.0/0   | Internet access |
+---
+
+### ALB Security Group
+
+**Inbound:**
+
+| Type | Protocol | Port | Source    | Purpose                   |
+| ---- | -------- | ---- | --------- | ------------------------- |
+| HTTP | TCP      | 80   | 0.0.0.0/0 | Public web access         |
+
+**Outbound:**
+
+| Type | Protocol | Port | Destination     | Purpose                |
+| ---- | -------- | ---- | --------------- | ---------------------- |
+| HTTP | TCP      | 8080 | EC2 instance SG | Forward traffic to app |
+
+---
+
+---
+9.
+Run Github Actions workflow (before this update EC2_INSTANCE_ID in **Spoonacular -> Settings → Secrets and variables → Actions** → **New repository secret**)
+Build and Push Docker Image
+Deploy Spring Boot App to EC2 with Docker Network
+
+## 10. Test API Endpoint
+
+Use Postman or curl:
+
+```http
+POST http://<your-alb-dns>:8080/api/suggest-lunch
+```
+
+Example:
+
+```http
+POST http://my-ALB-54332749.us-east-1.elb.amazonaws.com:8080/api/suggest-lunch
+```
+
+Errors:
+1) ALB targetGroup unhealthy.
+Connect to EC2 via Session Manager
+ curl http://localhost:8080/actuator/health
+ check SGs
+
 
 
 
