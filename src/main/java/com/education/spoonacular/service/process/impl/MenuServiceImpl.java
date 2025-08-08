@@ -49,7 +49,7 @@ public class MenuServiceImpl implements MenuService {
         List<Integer> suggestedRecipesForLunch = getSuggestedRecipesIdsForBreakfast(cuisineArray, energyExpenditure, allergiesArray, MealType.LUNCH);
         List<Integer> randomIdsFromList = findRandomIdsFromList(suggestedRecipesForLunch);
         List<RecipeDTOView> suggestedRecipesForBreakfast = getSuggestedRecipesForBreakfast(randomIdsFromList);
-        List<RecipeDTO> recipeDTOS = recipeDTOMapper.toDTO(suggestedRecipesForBreakfast);
+        List<RecipeDTO> recipeDTOS = recipeDTOMapper.toDTO(suggestedRecipesForBreakfast, objectMapper);
         return recipeDTOS;
     }
 

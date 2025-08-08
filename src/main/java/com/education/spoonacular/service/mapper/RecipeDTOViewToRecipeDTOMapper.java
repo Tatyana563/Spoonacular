@@ -6,6 +6,7 @@ import com.education.spoonacular.view.ViewIngredient;
 import com.education.spoonacular.view.ViewNutrient;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
@@ -19,14 +20,14 @@ public interface RecipeDTOViewToRecipeDTOMapper {
     @Mapping(source = "cuisinesJson", target = "cuisineName", qualifiedByName = "jsonToStringSet")
     @Mapping(source = "nutrientJson", target = "nutrient", qualifiedByName = "jsonToNutrientList")
     @Mapping(source = "ingredientJson", target = "ingredient", qualifiedByName = "jsonToIngredientList")
-    RecipeDTO toDTO(RecipeDTOView view);
+    RecipeDTO toDTO(RecipeDTOView view, @Context ObjectMapper objectMapper);
 
-    List<RecipeDTO> toDTO(List<RecipeDTOView> views);
+    List<RecipeDTO> toDTO(List<RecipeDTOView> views, @Context ObjectMapper objectMapper);
 
     @Named("jsonToStringSet")
-    default Set<String> jsonToStringSet(String json) {
+    default Set<String> jsonToStringSet(String json, @Context ObjectMapper objectMapper) {
         try {
-            return new ObjectMapper().readValue(json, new TypeReference<Set<String>>() {
+            return objectMapper.readValue(json, new TypeReference<Set<String>>() {
             });
         } catch (Exception e) {
             return Set.of();
@@ -34,9 +35,9 @@ public interface RecipeDTOViewToRecipeDTOMapper {
     }
 
     @Named("jsonToNutrientList")
-    default List<ViewNutrient> jsonToNutrientList(String json) {
+    default List<ViewNutrient> jsonToNutrientList(String json, @Context ObjectMapper objectMapper) {
         try {
-            return new ObjectMapper().readValue(json, new TypeReference<List<ViewNutrient>>() {
+            return objectMapper.readValue(json, new TypeReference<List<ViewNutrient>>() {
             });
         } catch (Exception e) {
             return List.of();
@@ -44,9 +45,9 @@ public interface RecipeDTOViewToRecipeDTOMapper {
     }
 
     @Named("jsonToIngredientList")
-    default List<ViewIngredient> jsonToIngredientList(String json) {
+    default List<ViewIngredient> jsonToIngredientList(String json, @Context ObjectMapper objectMapper) {
         try {
-            return new ObjectMapper().readValue(json, new TypeReference<List<ViewIngredient>>() {
+            return objectMapper.readValue(json, new TypeReference<List<ViewIngredient>>() {
             });
         } catch (Exception e) {
             return List.of();
