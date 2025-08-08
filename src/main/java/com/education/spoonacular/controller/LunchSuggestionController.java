@@ -4,6 +4,7 @@ import com.education.spoonacular.view.RecipeDTO;
 import com.education.spoonacular.dto.menu.LunchRequestDto;
 import com.education.spoonacular.dto.menu.ShoppingListDto;
 import com.education.spoonacular.service.process.api.MenuService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,7 +21,7 @@ public class LunchSuggestionController {
     private final MenuService menuService;
 
     @PostMapping("/suggest-lunch")
-    public List<RecipeDTO> suggestLunch(@RequestBody LunchRequestDto request) {
+    public List<RecipeDTO> suggestLunch(@Valid @RequestBody LunchRequestDto request) {
         return menuService.getSuggestedDishes(request);
 
     }
