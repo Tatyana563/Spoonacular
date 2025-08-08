@@ -1,14 +1,18 @@
 package com.education.spoonacular.service.process.impl;
 
-import com.education.spoonacular.view.RecipeDTO;
-import com.education.spoonacular.view.RecipeDTOView;
-import com.education.spoonacular.view.ViewIngredient;
-import com.education.spoonacular.view.ViewNutrient;
+import com.education.spoonacular.config.ActivityLevelConfig;
+import com.education.spoonacular.config.MacronutrientConfig;
+import com.education.spoonacular.config.MetabolicRateConfig;
+import com.education.spoonacular.config.SuggestedRecipesConfig;
 import com.education.spoonacular.dto.menu.*;
 import com.education.spoonacular.repository.RecipeRepository;
 import com.education.spoonacular.service.mapper.RecipeDTOViewToRecipeDTOMapper;
 import com.education.spoonacular.service.mapper.ShoppingListMapper;
 import com.education.spoonacular.service.process.api.MenuService;
+import com.education.spoonacular.view.RecipeDTO;
+import com.education.spoonacular.view.RecipeDTOView;
+import com.education.spoonacular.view.ViewIngredient;
+import com.education.spoonacular.view.ViewNutrient;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -26,7 +30,10 @@ public class MenuServiceImpl implements MenuService {
     private final ObjectMapper objectMapper;
     private final ShoppingListMapper shoppingListMapper;
     private final RecipeDTOViewToRecipeDTOMapper recipeDTOMapper;
-    private static final Integer AMOUNT_OF_SUGGESTED_RECIPES = 3;
+    private final SuggestedRecipesConfig suggestedRecipesConfig;
+    private final ActivityLevelConfig activityLevelConfig;
+    private final MacronutrientConfig macronutrientConfig;
+    private final MetabolicRateConfig metabolicRateConfig;
 
     public List<RecipeDTO> getSuggestedDishes(LunchRequestDto request) {
 
@@ -57,7 +64,7 @@ public class MenuServiceImpl implements MenuService {
         Collections.shuffle(recipeIds);
 
         return recipeIds.stream()
-                .limit(AMOUNT_OF_SUGGESTED_RECIPES)
+                .limit(suggestedRecipesConfig.getAmount())
                 .collect(Collectors.toList());
     }
 
@@ -111,28 +118,22 @@ public class MenuServiceImpl implements MenuService {
     }
 
     private int calculateBasalMetabolicRate(IndividualCharacteristicsDto characteristics) {
-        if (characteristics.getGender().equals(Gender.MAN)) {
-            return (int) ((10 * characteristics.getWeight()) + (6.25 * characteristics.getHeight()) - (5 * characteristics.getAge()) + 5);
-        } else {
-            return (int) ((10 * characteristics.getWeight()) + (6.25 * characteristics.getHeight()) - (5 * characteristics.getAge()) - 161);
-        }
+        int genderConstant = Gender.MAN.equals(characteristics.getGender())
+                ? metabolicRateConfig.getMaleConstant()
+                : metabolicRateConfig.getFemaleConstant();
+        return (int) ((metabolicRateConfig.getWeightMultiplier() * characteristics.getWeight()) + (metabolicRateConfig.getHeightMultiplier() * characteristics.getHeight())
+                - (metabolicRateConfig.getAgeMultiplier() * characteristics.getAge()) + genderConstant);
     }
 
     private Double calculateEnergyExpenditure(ActivityLevel activityLevel, int metabolisticRate) {
-        switch (activityLevel) {
-            case SEDENTARY:
-                return metabolisticRate * 1.2;
-            case LIGHTLY_ACTIVE:
-                return metabolisticRate * 1.375;
-            case MODERATELY_ACTIVE:
-                return metabolisticRate * 1.55;
-            case VERY_ACTIVE:
-                return metabolisticRate * 1.725;
-            case SUPER_ACTIVE:
-                return metabolisticRate * 1.9;
-            default:
-                throw new IllegalArgumentException("Unknown activity level: " + activityLevel);
-        }
+        return switch (activityLevel) {
+            case SEDENTARY -> metabolisticRate * activityLevelConfig.getSedentary();
+            case LIGHTLY_ACTIVE -> metabolisticRate * activityLevelConfig.getLightlyActive();
+            case MODERATELY_ACTIVE -> metabolisticRate * activityLevelConfig.getModeratelyActive();
+            case VERY_ACTIVE -> metabolisticRate * activityLevelConfig.getVeryActive();
+            case SUPER_ACTIVE -> metabolisticRate * activityLevelConfig.getSuperActive();
+            default -> throw new IllegalArgumentException("Unknown activity level: " + activityLevel);
+        };
     }
 
     private MacronutrientDto calculateMacronutrient(IndividualCharacteristicsDto characteristics, int metabolisticRate) {
@@ -140,11 +141,11 @@ public class MenuServiceImpl implements MenuService {
         double fat;
         double carbohydrates;
         if (characteristics.getActivityLevel().equals(ActivityLevel.SEDENTARY) || characteristics.getActivityLevel().equals(ActivityLevel.LIGHTLY_ACTIVE)) {
-            protein = characteristics.getWeight() * 1.2;
-        } else protein = characteristics.getWeight() * 1.4;
+            protein = characteristics.getWeight() * macronutrientConfig.getProteinLowActivity();
+        } else protein = characteristics.getWeight() * macronutrientConfig.getProteinHighActivity();
 
         fat = characteristics.getWeight();
-        carbohydrates = metabolisticRate * 0.65 * 0.25;
+        carbohydrates = metabolisticRate * macronutrientConfig.getCarbohydratesMultiplier();
         return new MacronutrientDto(protein, fat, carbohydrates);
     }
 }
