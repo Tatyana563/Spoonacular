@@ -17,6 +17,7 @@
         <java.version>17</java.version>
         <version.lombok>1.18.34</version.lombok>
         <version.mapstruct>1.6.3</version.mapstruct>
+        <version.openapi>2.6.0</version.openapi>
     </properties>
     <dependencies>
         <dependency>
@@ -101,6 +102,12 @@
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${version.openapi}</version>
         </dependency>
 
     </dependencies>
