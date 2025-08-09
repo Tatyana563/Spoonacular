@@ -1,0 +1,106 @@
+Kubernetes Install on Ubuntu Server 22.04 LTS (from scratch)
+
+Assumptions:
+
+Fresh AWS EC2 instance: Ubuntu Server 22.04 LTS (HVM), SSD volume type
+You have SSH access
+ STEP 1: Initial System Setup
+
+sudo apt update && sudo apt upgrade -y
+ STEP 2: Install Container Runtime (containerd)
+#Docker might rely on this module to manage image layers.
+sudo modprobe overlay
+# Without this module, Kubernetes may not be able to apply firewall rules to pod traffic.
+sudo modprobe br_netfilter
+
+# Load kernel modules on boot
+cat <<EOF | sudo tee /etc/modules-load.d/containerd.conf
+overlay
+br_netfilter
+EOF
+
+# Required sysctl params
+cat <<EOF | sudo tee /etc/sysctl.d/99-kubernetes-cri.conf
+net.bridge.bridge-nf-call-iptables = 1
+net.ipv4.ip_forward = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+EOF
+
+sudo sysctl --system
+
+# Install containerd
+sudo apt install -y containerd
+
+# Default containerd config
+sudo mkdir -p /etc/containerd
+containerd config default | sudo tee /etc/containerd/config.toml
+
+# Restart and enable containerd
+sudo systemctl restart containerd
+sudo systemctl enable containerd
+ STEP 3: Install Kubernetes Tools (Manual Binary Download)
+
+# Make sure curl and HTTPS support are present
+sudo apt install -y curl ca-certificates
+
+# Get latest stable release
+RELEASE=$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)
+
+# Download kubeadm, kubelet, kubectl binaries
+curl -LO https://storage.googleapis.com/kubernetes-release/release/${RELEASE}/bin/linux/amd64/kubeadm
+curl -LO https://storage.googleapis.com/kubernetes-release/release/${RELEASE}/bin/linux/amd64/kubelet
+curl -LO https://storage.googleapis.com/kubernetes-release/release/${RELEASE}/bin/linux/amd64/kubectl
+
+# Make executable and move to PATH
+chmod +x kubeadm kubelet kubectl
+sudo mv kubeadm kubelet kubectl /usr/local/bin/
+ STEP 4: Setup kubelet systemd Service
+
+sudo bash -c 'cat <<EOF > /etc/systemd/system/kubelet.service
+[Unit]
+Description=kubelet: The Kubernetes Node Agent
+Documentation=https://kubernetes.io/docs/home/
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/kubelet
+Restart=always
+StartLimitInterval=0
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+EOF'
+
+sudo systemctl daemon-reexec
+sudo systemctl daemon-reload
+sudo systemctl enable kubelet
+sudo systemctl start kubelet
+ STEP 5: Disable Swap (Required)
+t
+sudo swapoff -a
+sudo sed -i '/ swap / s/^/#/' /etc/fstab
+
+STEP 6: (Optional) Initialize Control Plane Node
+# Replace POD_NETWORK_CIDR if needed (for Calico, use 192.168.0.0/16)
+sudo kubeadm init --pod-network-cidr=192.168.0.0/16
+
+# Set up local kubeconfig for kubectl
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+STEP 7: (Optional) Install Calico Network Plugin
+
+kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/calico.yaml
+ STEP 8: Verify Kubernetes Tools Are Installed
+
+kubeadm version
+kubectl version --client
+kubelet --version
+You should see proper versions like:
+
+kubeadm version: &version.Info{Major:"1", Minor:"33", GitVersion:"v1.33.3", ...}
+Client Version: v1.33.3
+Kubelet v1.33.3
+
+****************************************

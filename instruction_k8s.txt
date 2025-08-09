@@ -1,0 +1,101 @@
+Install Kubernetes (kubeadm, kubelet, kubectl) on Ubuntu 24.04 LTS
+Connect via ssh:
+chmod 400 /my-key-pair.pem
+ssh -i my-key-pair.pem ubuntu@44.201.206.253
+ping -c 1 1.1.1.1
+
+STEP 1: System Preparation
+sudo apt update && sudo apt upgrade -y
+
+Disable swap (required by kubelet):
+#Turns off all swap now,kubelet won't start with swap on
+sudo swapoff -a
+#Prevents swap from re-enabling at boot, comments out the swap entry in the /etc/fstab file
+sudo sed -i '/ swap / s/^/#/' /etc/fstab
+
+Set up required kernel modules and sysctl parameters:
+#Loads the overlay kernel module into the Linux kernel to manage container image layers
+sudo modprobe overlay
+#Loads the br_netfilter kernel module.
+#Kubernetes uses Linux bridges to connect container networks, and for network policies and routing to work correctly,
+#the bridge traffic must be passed through iptables. Without this module, firewall rules won't apply correctly to pod traffic,
+#breaking network isolation or communication.
+sudo modprobe br_netfilter
+#Running modprobe overlay and modprobe br_netfilter loads the modules only for the current session.
+#Creating this file ensures these modules load on boot, so Kubernetes networking and container storage features keep working after reboot.
+
+cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
+overlay
+br_netfilter
+EOF
+#network packets traversing a Linux bridge can be filtered by iptables rules.
+#Enables IP forwarding between network interfaces,
+cat <<EOF | sudo tee /etc/sysctl.d/99-kubernetes.conf
+net.bridge.bridge-nf-call-iptables  = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+net.ipv4.ip_forward                 = 1
+EOF
+
+sudo sysctl --system
+
+STEP 2: Install Containerd
+sudo apt install -y containerd
+sudo mkdir -p /etc/containerd
+containerd config default | sudo tee /etc/containerd/config.toml
+sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
+sudo systemctl restart containerd
+sudo systemctl enable containerd
+
+STEP 3: Install Kubernetes (kubeadm, kubelet, kubectl)
+# This downloads the GPG public key file used to verify Kubernetes package
+sudo curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.33/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.33/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+sudo apt update
+sudo apt install -y kubelet kubeadm kubectl
+#They won't be automatically upgraded
+sudo apt-mark hold kubelet kubeadm kubectl
+
+kubeadm version
+kubectl version --client
+kubelet --version
+
+STEP 4: Set the hostname as FQDN:
+ AWS has enabled IMDSv2 (Instance Metadata Service v2), which requires a session token for access.
+
+ TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" \
+   -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+
+ curl -H "X-aws-ec2-metadata-token: $TOKEN" \
+   http://169.254.169.254/latest/meta-data/local-hostname
+
+STEP 5: Initialize Kubernetus cluster
+sudo kubeadm init --config=/etc/kubernetes/aws.yml
+
+sudo nano /etc/kubernetes/aws.yml
+Paste following:
+apiVersion: kubeadm.k8s.io/v1beta2
+kind: ClusterConfiguration
+networking:
+  serviceSubnet: "10.100.0.0/16"
+  podSubnet: "10.244.0.0/16"
+apiServer:
+  extraArgs:
+    cloud-provider: "external"     # <-- change from "aws" to "external"
+controllerManager:
+  extraArgs:
+    cloud-provider: "external"     # <-- change from "aws" to "external"
+
+
+
+  ERROR:
+  The kube-apiserver pod was crashing repeatedly (CrashLoopBackOff).
+  Error: unknown flag: --cloud-provider
+  sudo nano /etc/kubernetes/manifests/kube-apiserver.yaml
+  AND remove --cloud-provider (IMPORTANT: remove also in /etc/kubernetes/manifests/kube-controller-manager.yaml)
+  sudo systemctl restart kubelet
+  sudo crictl --runtime-endpoint=unix:///run/containerd/containerd.sock ps -a
+  The kube-apiserver pod is now Running, and the control plane is back online.
+
+
