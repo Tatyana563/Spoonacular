@@ -1,0 +1,31 @@
+1.CREATE STACK
+aws cloudformation create-stack \
+  --stack-name eks-vpc-stack \
+  --template-body file://vpc.yaml \
+  --parameters ParameterKey=AvailabilityZone1,ParameterValue=us-east-1a \
+               ParameterKey=AvailabilityZone2,ParameterValue=us-east-1b \
+  --capabilities CAPABILITY_NAMED_IAM \
+  --profile my-user
+
+2. SEE IDs:
+aws cloudformation describe-stacks \
+    --stack-name eks-vpc-stack \
+    --query "Stacks[0].Outputs" \
+    --profile my-user
+
+
+
+3.eksctl create cluster \
+    --name springboot-eks \
+    --version 1.30 \
+    --region us-east-1 \
+    --vpc-private-subnets subnet-0320110965407f41d,subnet-09c5435737019f3dc \
+    --vpc-public-subnets subnet-0e1241de79390a8db,subnet-0b790d0200e5d9d1a \
+    --nodegroup-name springboot-nodes \
+    --node-type t3.micro \
+    --nodes 2 \
+    --nodes-min 2 \
+    --nodes-max 3 \
+    --managed \
+    --profile my-user
+
