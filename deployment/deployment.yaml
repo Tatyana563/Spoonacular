@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spoonacular-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: spoonacular-app
+  template:
+    metadata:
+      labels:
+        app: spoonacular-app
+    spec:
+      serviceAccountName: spoonacular-sa
+      containers:
+        - name: spoonacular-app
+          image: 270770993091.dkr.ecr.us-east-1.amazonaws.com/spoonacular-app:v1.0.0
+          ports:
+            - containerPort: 8080
+
+          env:
+            - name: DB_USERNAME_FILE
+              value: /mnt/secrets/DB_USERNAME
+            - name: DB_PASSWORD_FILE
+              value: /mnt/secrets/DB_PASSWORD
+            - name: DB_HOST_FILE
+              value: /mnt/secrets/DB_HOST
+            - name: DB_PORT_FILE
+              value: /mnt/secrets/DB_PORT
+            - name: DB_NAME_FILE
+              value: /mnt/secrets/DB_NAME
+          volumeMounts:
+            - name: secrets-store
+              mountPath: /mnt/secrets
+              readOnly: true
+      volumes:
+        - name: secrets-store
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: spoonacular-postgres

@@ -2,8 +2,15 @@ name: Build and Push Docker Image
 
 on:
   push:
-    branches: [main]
-  workflow_dispatch: # Allow manual triggering
+    branches:
+      - release
+    tags:
+      - "v*"
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: spoonacular-app
+  AWS_ACCOUNT_ID: 270770993091
 
 jobs:
   build-and-push:
@@ -11,20 +18,82 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
+      # ✅ ADD THIS STEP (required for mvn)
+      - name: Set up JDK and Maven
+        uses: actions/setup-java@v4
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          distribution: 'temurin'
+          java-version: '17'   # adjust if needed
+          cache: maven
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      # 🧠 Extract version from pom.xml
+      - name: Get version from pom.xml
+        id: version
+        run: |
+          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+      # 🧠 Get short commit SHA
+      - name: Get commit SHA
+        run: echo "COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      # 🧠 If Git tag exists, use it
+      - name: Detect Git tag
+        id: tag
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            TAG_NAME=${GITHUB_REF#refs/tags/}
+            echo "GIT_TAG=$TAG_NAME" >> $GITHUB_ENV
+          fi
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          context: .
-          push: true
-          tags: tetyana5633/spoonacular:latest
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        run: |
+          aws ecr get-login-password --region $AWS_REGION \
+          | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+
+      - name: Ensure repository exists
+        run: |
+          aws ecr describe-repositories --repository-names $ECR_REPOSITORY \
+          || aws ecr create-repository --repository-name $ECR_REPOSITORY
+
+      # 🐳 Build image once
+      - name: Build Docker image
+        run: |
+          docker build -t $ECR_REPOSITORY:$COMMIT_SHA .
+
+      # 🏷️ Tag image with multiple tags
+      - name: Tag Docker images
+        run: |
+          IMAGE_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY
+
+          docker tag $ECR_REPOSITORY:$COMMIT_SHA $IMAGE_URI:$COMMIT_SHA
+          docker tag $ECR_REPOSITORY:$COMMIT_SHA $IMAGE_URI:$VERSION
+          docker tag $ECR_REPOSITORY:$COMMIT_SHA $IMAGE_URI:$VERSION-$COMMIT_SHA
+          docker tag $ECR_REPOSITORY:$COMMIT_SHA $IMAGE_URI:latest
+
+          if [ ! -z "$GIT_TAG" ]; then
+            docker tag $ECR_REPOSITORY:$COMMIT_SHA $IMAGE_URI:$GIT_TAG
+          fi
+
+      # 🚀 Push all tags
+      - name: Push Docker images
+        run: |
+          IMAGE_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY
+
+          docker push $IMAGE_URI:$COMMIT_SHA
+          docker push $IMAGE_URI:$VERSION
+          docker push $IMAGE_URI:$VERSION-$COMMIT_SHA
+          docker push $IMAGE_URI:latest
+
+          if [ ! -z "$GIT_TAG" ]; then
+            docker push $IMAGE_URI:$GIT_TAG
+          fi

@@ -1,31 +1,46 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
-  VPC with public and private subnets, IGW, NAT Gateway, and route tables for EKS.
+  VPC with public and private subnets, IGW, NAT Gateway, route tables for EKS,
+  and RDS Postgres. All resources prefixed with eks-vpc-stack.
 
 Parameters:
   VpcCIDR:
     Type: String
     Default: 10.0.0.0/16
     Description: CIDR block for the VPC
+
   PublicSubnet1CIDR:
     Type: String
     Default: 10.0.0.0/24
+
   PublicSubnet2CIDR:
     Type: String
     Default: 10.0.1.0/24
+
   PrivateSubnet1CIDR:
     Type: String
     Default: 10.0.2.0/24
+
   PrivateSubnet2CIDR:
     Type: String
     Default: 10.0.3.0/24
+
   AvailabilityZone1:
     Type: AWS::EC2::AvailabilityZone::Name
+
   AvailabilityZone2:
     Type: AWS::EC2::AvailabilityZone::Name
 
+  DBUsername:
+    Type: String
+    Default: postgres
+    Description: RDS master username
+
 Resources:
 
+  ####################
+  # VPC + Subnets
+  ####################
   MyVPC:
     Type: AWS::EC2::VPC
     Properties:
@@ -34,14 +49,14 @@ Resources:
       EnableDnsHostnames: true
       Tags:
         - Key: Name
-          Value: eks-vpc
+          Value: eks-vpc-stack-vpc
 
   InternetGateway:
     Type: AWS::EC2::InternetGateway
     Properties:
       Tags:
         - Key: Name
-          Value: eks-igw
+          Value: eks-vpc-stack-igw
 
   AttachInternetGateway:
     Type: AWS::EC2::VPCGatewayAttachment
@@ -56,9 +71,6 @@ Resources:
       CidrBlock: !Ref PublicSubnet1CIDR
       AvailabilityZone: !Ref AvailabilityZone1
       MapPublicIpOnLaunch: true
-      Tags:
-        - Key: Name
-          Value: public-subnet-1
 
   PublicSubnet2:
     Type: AWS::EC2::Subnet
@@ -67,9 +79,6 @@ Resources:
       CidrBlock: !Ref PublicSubnet2CIDR
       AvailabilityZone: !Ref AvailabilityZone2
       MapPublicIpOnLaunch: true
-      Tags:
-        - Key: Name
-          Value: public-subnet-2
 
   PrivateSubnet1:
     Type: AWS::EC2::Subnet
@@ -77,10 +86,6 @@ Resources:
       VpcId: !Ref MyVPC
       CidrBlock: !Ref PrivateSubnet1CIDR
       AvailabilityZone: !Ref AvailabilityZone1
-      MapPublicIpOnLaunch: false
-      Tags:
-        - Key: Name
-          Value: private-subnet-1
 
   PrivateSubnet2:
     Type: AWS::EC2::Subnet
@@ -88,39 +93,10 @@ Resources:
       VpcId: !Ref MyVPC
       CidrBlock: !Ref PrivateSubnet2CIDR
       AvailabilityZone: !Ref AvailabilityZone2
-      MapPublicIpOnLaunch: false
-      Tags:
-        - Key: Name
-          Value: private-subnet-2
 
-  PublicRouteTable:
-    Type: AWS::EC2::RouteTable
-    Properties:
-      VpcId: !Ref MyVPC
-      Tags:
-        - Key: Name
-          Value: public-rt
-
-  PublicRoute:
-    Type: AWS::EC2::Route
-    DependsOn: AttachInternetGateway
-    Properties:
-      RouteTableId: !Ref PublicRouteTable
-      DestinationCidrBlock: 0.0.0.0/0
-      GatewayId: !Ref InternetGateway
-
-  PublicSubnet1RouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref PublicSubnet1
-      RouteTableId: !Ref PublicRouteTable
-
-  PublicSubnet2RouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref PublicSubnet2
-      RouteTableId: !Ref PublicRouteTable
-
+  ####################
+  # NAT + Routes
+  ####################
   ElasticIPForNAT:
     Type: AWS::EC2::EIP
     DependsOn: AttachInternetGateway
@@ -132,17 +108,24 @@ Resources:
     Properties:
       AllocationId: !GetAtt ElasticIPForNAT.AllocationId
       SubnetId: !Ref PublicSubnet1
-      Tags:
-        - Key: Name
-          Value: nat-gateway
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MyVPC
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachInternetGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
 
   PrivateRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref MyVPC
-      Tags:
-        - Key: Name
-          Value: private-rt
 
   PrivateRoute:
     Type: AWS::EC2::Route
@@ -151,35 +134,51 @@ Resources:
       DestinationCidrBlock: 0.0.0.0/0
       NatGatewayId: !Ref NatGateway
 
-  PrivateSubnet1RouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
+  ####################
+  # RDS Security
+  ####################
+  RDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
     Properties:
-      SubnetId: !Ref PrivateSubnet1
-      RouteTableId: !Ref PrivateRouteTable
+      GroupDescription: Allow internal access to Postgres
+      VpcId: !Ref MyVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 10.0.0.0/16
 
-  PrivateSubnet2RouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
+  RdsSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
     Properties:
-      SubnetId: !Ref PrivateSubnet2
-      RouteTableId: !Ref PrivateRouteTable
+      DBSubnetGroupDescription: Subnet group for RDS
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+
+  ####################
+  # RDS Database
+  ####################
+  SpoonacularDB:
+    Type: AWS::RDS::DBInstance
+    DependsOn: [RdsSubnetGroup, RDSSecurityGroup]
+    Properties:
+      DBInstanceIdentifier: eks-vpc-stack-db
+      DBName: spoonacular
+      AllocatedStorage: 20
+      DBInstanceClass: db.t3.micro
+      Engine: postgres
+      EngineVersion: "14"
+      MasterUsername: !Ref DBUsername
+      MasterUserPassword: "{{resolve:secretsmanager:spoonacular/postgres:SecretString:password}}"
+      VPCSecurityGroups:
+        - !GetAtt RDSSecurityGroup.GroupId
+      DBSubnetGroupName: !Ref RdsSubnetGroup
+      PubliclyAccessible: false
+      MultiAZ: false
 
 Outputs:
-  VpcId:
-    Description: VPC ID
-    Value: !Ref MyVPC
-
-  PublicSubnet1:
-    Description: Public subnet 1 ID
-    Value: !Ref PublicSubnet1
-
-  PublicSubnet2:
-    Description: Public subnet 2 ID
-    Value: !Ref PublicSubnet2
-
-  PrivateSubnet1:
-    Description: Private subnet 1 ID
-    Value: !Ref PrivateSubnet1
-
-  PrivateSubnet2:
-    Description: Private subnet 2 ID
-    Value: !Ref PrivateSubnet2
+  RDSEndpoint:
+    Value: !GetAtt SpoonacularDB.Endpoint.Address
+  RDSPort:
+    Value: !GetAtt SpoonacularDB.Endpoint.Port

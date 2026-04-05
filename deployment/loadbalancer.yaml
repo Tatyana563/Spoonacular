@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: spoonacular-service
+  namespace: default
+spec:
+  type: LoadBalancer
+  selector:
+    app: spoonacular-app  # must match the label in deployment.yaml
+  ports:
+    - protocol: TCP
+      port: 80          # external port
+      targetPort: 8080  # container port

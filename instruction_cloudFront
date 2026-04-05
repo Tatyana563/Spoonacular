@@ -2,30 +2,175 @@
 aws cloudformation create-stack \
   --stack-name eks-vpc-stack \
   --template-body file://vpc.yaml \
-  --parameters ParameterKey=AvailabilityZone1,ParameterValue=us-east-1a \
-               ParameterKey=AvailabilityZone2,ParameterValue=us-east-1b \
-  --capabilities CAPABILITY_NAMED_IAM \
+  --parameters \
+    ParameterKey=AvailabilityZone1,ParameterValue=us-east-1a \
+    ParameterKey=AvailabilityZone2,ParameterValue=us-east-1b \
   --profile my-user
 
-2. SEE IDs:
+
+note: in case error with credentials:
+aws sts get-caller-identity --profile my-user
+
+2.CHECK STATUS
+ aws cloudformation describe-stacks \
+                  --stack-name eks-vpc-stack \
+                  --query "Stacks[0].StackStatus" \
+                  --profile my-user
+
+3. SEE IDs:
 aws cloudformation describe-stacks \
     --stack-name eks-vpc-stack \
     --query "Stacks[0].Outputs" \
     --profile my-user
 
+3. CREATE EKS cluster:
+eksctl create cluster \
+  --name springboot-eks \
+  --version 1.30 \
+  --region us-east-1 \
+  --vpc-private-subnets subnet-08d9acc8c2b77f62a,subnet-03322781f282141a2 \
+  --vpc-public-subnets subnet-0c4f7d7a87f4d5961,subnet-0f02bbf6966995d46 \
+  --nodegroup-name springboot-nodes \
+  --node-type t3.medium \
+  --nodes 2 \
+  --nodes-min 2 \
+  --nodes-max 3 \
+  --managed \
+  --profile my-user
 
 
-3.eksctl create cluster \
-    --name springboot-eks \
-    --version 1.30 \
-    --region us-east-1 \
-    --vpc-private-subnets subnet-0320110965407f41d,subnet-09c5435737019f3dc \
-    --vpc-public-subnets subnet-0e1241de79390a8db,subnet-0b790d0200e5d9d1a \
-    --nodegroup-name springboot-nodes \
-    --node-type t3.micro \
-    --nodes 2 \
-    --nodes-min 2 \
-    --nodes-max 3 \
-    --managed \
+4. DELETE (reduce AWS payment)
+Step 1: Delete the EKS cluster
+eksctl delete cluster --name springboot-eks --region us-east-1 --profile my-user
+
+Step 2: Delete the CloudFormation stack (VPC + subnets + NAT etc.)
+aws cloudformation delete-stack --stack-name eks-vpc-stack  --profile my-user
+
+5. In dir where Dockerfile
+Build the Docker image locally
+git checkout release
+docker build -t spoonacular-app:1a62e50ec568f4332c00893d1c09a1065d74eaa8 .
+
+6. Push your Docker image to a registry
+
+# 1. Authenticate Docker with ECR
+aws ecr get-login-password --region us-east-1 --profile my-user \
+  | docker login --username AWS --password-stdin 270770993091.dkr.ecr.us-east-1.amazonaws.com
+
+# 2. Create a repository (if not already)
+aws ecr create-repository \
+    --repository-name spoonacular-app \
     --profile my-user
+
+
+# 3. Tag your image for ECR
+docker tag spoonacular-app:1a62e50 270770993091.dkr.ecr.us-east-1.amazonaws.com/spoonacular-app:v1.0.0
+
+# 4. Push the image
+docker push 270770993091.dkr.ecr.us-east-1.amazonaws.com/spoonacular-app:v1.0.0
+
+IN ORDER TO SAVE COSTS:
+aws ecr delete-repository \
+    --repository-name spoonacular-app \
+    --force \
+    --profile my-user
+
+7.Create Kubernetes Secret for RDS credentials (deprecated)
+
+kubectl create secret generic rds-secrets \
+  --from-literal=username=postgres \
+  --from-literal=password='lemon55#'
+a)  Store DB credentials in AWS Secrets Manager
+Secret Manager used:
+aws secretsmanager create-secret \
+  --name spoonacular/postgres \
+  --description "Postgres credentials for Spoonacular app" \
+  --secret-string '{
+    "username": "postgres",
+    "password": "lemon55#",
+    "host": "eks-vpc-stack-db.cermqy24eyt2.us-east-1.rds.amazonaws.com",
+    "port": "5432",
+    "dbname": "spoonacular"
+  }'
+b)  Install Secrets Store CSI Driver on EKS
+helm repo add secrets-store-csi-driver https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts
+helm repo add aws-secrets-manager https://aws.github.io/secrets-store-csi-driver-provider-aws
+
+helm upgrade secrets-provider-aws \
+  secrets-store-csi-driver/secrets-store-csi-driver \
+  -n kube-system \
+  --set syncSecret.enabled=true
+Verify driver installed:
+kubectl get csidrivers
+# secrets-store.csi.k8s.io should appear
+c) Create IAM Policy & Service Account (IRSA)
+policy.json:
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:DescribeSecret"
+      ],
+      "Resource": "arn:aws:secretsmanager:us-east-1:270770993091:secret:spoonacular/postgres-*"
+    }
+  ]
+}
+d) aws iam create-policy \
+     --policy-name SpoonacularSecretsPolicy \
+     --policy-document file://policy.json
+e)  Create SecretProviderClass
+(This tells the CSI Driver which secret to fetch from AWS and how to map it)
+8. kubectl apply -f deployment.yaml
+9.Using Ingress with ALB on EKS
+kubectl apply -f ingress.yaml
+10.Install AWS Load Balancer Controller
+eksctl utils associate-iam-oidc-provider \
+  --region us-east-1 \
+  --cluster springboot-eks \
+  --approve \
+  --profile my-user
+11.curl -o iam_policy.json \
+   https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/docs/install/iam_policy.json
+
+   aws iam create-policy \
+     --policy-name AWSLoadBalancerControllerIAMPolicy \
+     --policy-document file://iam_policy.json \
+     --profile my-user
+12.Create IAM service account (IRSA)
+eksctl create iamserviceaccount \
+  --cluster springboot-eks \
+  --namespace kube-system \
+  --name aws-load-balancer-controller \
+  --attach-policy-arn arn:aws:iam::270770993091:policy/AWSLoadBalancerControllerIAMPolicy \
+  --override-existing-serviceaccounts \
+  --approve \
+  --profile my-user
+13.Install controller via Helm
+helm repo add eks https://aws.github.io/eks-charts
+helm repo update
+
+helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
+  -n kube-system \
+  --set clusterName=springboot-eks \
+  --set serviceAccount.create=false \
+  --set serviceAccount.name=aws-load-balancer-controller
+14.kubectl get pods -n kube-system | grep aws-load-balancer
+   kubectl get endpoints -n kube-system aws-load-balancer-webhook-service
+15. Verify Ingress & ALB
+kubectl get ingress spoonacular-ingress
+
+
+
+
+
+
+
+
+
+
+
+
 
