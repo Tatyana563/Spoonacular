@@ -20,7 +20,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # ✅ ADD THIS STEP (required for mvn)
       - name: Set up JDK and Maven
         uses: actions/setup-java@v4
         with:
@@ -28,18 +27,18 @@ jobs:
           java-version: '17'   # adjust if needed
           cache: maven
 
-      # 🧠 Extract version from pom.xml
+      # Extract version from pom.xml
       - name: Get version from pom.xml
         id: version
         run: |
           VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-      # 🧠 Get short commit SHA
+      # Get short commit SHA
       - name: Get commit SHA
         run: echo "COMMIT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
-      # 🧠 If Git tag exists, use it
+      # If Git tag exists, use it
       - name: Detect Git tag
         id: tag
         run: |
@@ -65,12 +64,12 @@ jobs:
           aws ecr describe-repositories --repository-names $ECR_REPOSITORY \
           || aws ecr create-repository --repository-name $ECR_REPOSITORY
 
-      # 🐳 Build image once
+      # Build image once
       - name: Build Docker image
         run: |
           docker build -t $ECR_REPOSITORY:$COMMIT_SHA .
 
-      # 🏷️ Tag image with multiple tags
+      # Tag image with multiple tags
       - name: Tag Docker images
         run: |
           IMAGE_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY
@@ -84,7 +83,7 @@ jobs:
             docker tag $ECR_REPOSITORY:$COMMIT_SHA $IMAGE_URI:$GIT_TAG
           fi
 
-      # 🚀 Push all tags
+      # Push all tags
       - name: Push Docker images
         run: |
           IMAGE_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY
